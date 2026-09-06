@@ -38,3 +38,13 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+# ltfrontend
+
+## Supabase
+
+1. Create a Supabase project and open its SQL Editor.
+2. Run the SQL from `supabase/schema.sql`.
+3. Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
+
+The service role key is used only by the server-side API routes. Do not expose it in client-side code or commit `.env.local`.
+# duancanhan
