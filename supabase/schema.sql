@@ -15,5 +15,85 @@ create table if not exists public.sessions (
   expires_at bigint not null
 );
 
+alter table public.users add column if not exists phone text not null default '';
+alter table public.users drop column if exists student_id;
+alter table public.users drop column if exists class_name;
+
 alter table public.users enable row level security;
 alter table public.sessions enable row level security;
+
+create table if not exists public.movies (
+  id text primary key,
+  title text not null,
+  genre text not null,
+  duration integer not null check (duration > 0),
+  release text not null,
+  status text not null check (status in ('Đang chiếu', 'Sắp chiếu')),
+  poster text not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.rooms (
+  id text primary key,
+  name text not null,
+  type text not null,
+  rows integer not null check (rows > 0),
+  seats integer not null check (seats > 0),
+  status text not null check (status in ('Hoạt động', 'Bảo trì')),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.showtimes (
+  id text primary key,
+  movie_id text not null references public.movies(id) on delete cascade,
+  room_id text not null references public.rooms(id) on delete cascade,
+  date text not null,
+  start_time text not null,
+  end_time text not null,
+  price integer not null check (price >= 0),
+  created_at timestamptz not null default now(),
+  unique (room_id, date, start_time)
+);
+
+create table if not exists public.tickets (
+  id text primary key,
+  user_id bigint references public.users(id) on delete set null,
+  customer_name text not null,
+  customer_email text not null,
+  showtime_id text not null references public.showtimes(id) on delete restrict,
+  seats text[] not null,
+  amount integer not null check (amount >= 0),
+  payment_method text not null,
+  status text not null default 'Đã thanh toán' check (status in ('Đã thanh toán', 'Chờ thanh toán')),
+  created_at timestamptz not null default now()
+);
+
+alter table public.movies enable row level security;
+alter table public.rooms enable row level security;
+alter table public.showtimes enable row level security;
+alter table public.tickets enable row level security;
+
+insert into public.movies (id, title, genre, duration, release, status, poster) values
+  ('MV-001', 'Avatar 3', 'Sci-Fi', 162, '15/09/2026', 'Đang chiếu', 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=160&q=80'),
+  ('MV-002', 'Conan: Ngôi sao 5 cánh', 'Anime', 110, '20/09/2026', 'Sắp chiếu', 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=160&q=80'),
+  ('MV-003', 'Mùa hè cuối cùng', 'Tâm lý', 98, '08/09/2026', 'Đang chiếu', 'https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=160&q=80'),
+  ('MV-004', 'Đêm trong rừng', 'Kinh dị', 115, '01/10/2026', 'Sắp chiếu', 'https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=160&q=80')
+on conflict (id) do nothing;
+
+insert into public.rooms (id, name, type, rows, seats, status) values
+  ('R-01', 'Phòng 01', '2D', 5, 40, 'Hoạt động'),
+  ('R-02', 'Phòng 02', '3D', 5, 40, 'Hoạt động'),
+  ('R-VIP', 'Phòng VIP', 'IMAX', 5, 40, 'Bảo trì')
+on conflict (id) do nothing;
+
+insert into public.showtimes (id, movie_id, room_id, date, start_time, end_time, price) values
+  ('ST-001', 'MV-001', 'R-01', '15/09/2026', '18:00', '20:42', 80000),
+  ('ST-002', 'MV-001', 'R-02', '15/09/2026', '20:00', '22:42', 100000),
+  ('ST-003', 'MV-002', 'R-01', '15/09/2026', '19:30', '21:20', 70000)
+on conflict (id) do nothing;
+
+insert into public.tickets (id, customer_name, customer_email, showtime_id, seats, amount, payment_method, status) values
+  ('TICKET-ST-001-001', 'Nguyễn Minh Anh', 'minhanh@email.com', 'ST-001', array['A03', 'A04'], 160000, 'Ví điện tử', 'Đã thanh toán'),
+  ('TICKET-ST-002-014', 'Trần Hoàng Nam', 'hoangnam@email.com', 'ST-002', array['B05'], 100000, 'Thẻ ngân hàng', 'Đã thanh toán'),
+  ('TICKET-ST-003-022', 'Lê Thu Hà', 'thuha@email.com', 'ST-003', array['C02', 'C03'], 140000, 'Tiền mặt', 'Chờ thanh toán')
+on conflict (id) do nothing;

@@ -1,5 +1,3 @@
-/*admin@lotuscinema.vn
-Admin@123456*/
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 
@@ -46,9 +44,9 @@ export default function Home() {
       <main className="login-layout">
         <section className="form-panel" aria-labelledby="form-title">
           <div className="form-heading">
-            <p className="section-label">LEARNING SPACE</p>
+            <p className="section-label">LOTUS CINEMA</p>
             <h2 id="form-title">Đăng nhập</h2>
-            <p>Đăng nhập để tiếp tục hành trình học tập của bạn.</p>
+            <p>Đăng nhập để đặt vé và quản lý tài khoản thành viên.</p>
           </div>
           <form onSubmit={handleSubmit} className="student-form">
             <label htmlFor="email">Email <span>*</span></label>

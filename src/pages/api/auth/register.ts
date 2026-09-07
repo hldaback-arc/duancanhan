@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     setSessionCookie(res, await createSession(user.id));
     return res.status(201).json({ user: toPublicUser(user) });
   } catch (error) {
-    if (isDatabaseConstraintError(error)) return res.status(409).json({ message: "Email hoặc mã số sinh viên đã được sử dụng." });
+    if (isDatabaseConstraintError(error)) return res.status(409).json({ message: "Email đã được sử dụng." });
     return res.status(500).json({ message: "Không thể tạo tài khoản lúc này." });
   }
 }

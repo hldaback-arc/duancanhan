@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const updated = await updateUser(user.id, { fullName: fullName.trim(), email: email.trim().toLowerCase(), phone: phone.trim() });
     return res.status(200).json({ user: updated ? toPublicUser(updated) : undefined });
   } catch (error) {
-    if (isDatabaseConstraintError(error)) return res.status(409).json({ message: "Email hoặc mã số sinh viên đã được sử dụng." });
+    if (isDatabaseConstraintError(error)) return res.status(409).json({ message: "Email đã được sử dụng." });
     return res.status(500).json({ message: "Không thể cập nhật thông tin." });
   }
 }

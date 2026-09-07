@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { stringifySetCookie } from "cookie";
 import { deleteSession, getUserFromSession } from "./auth";
 
-export const sessionCookie = "learning_session";
+export const sessionCookie = "lotus_cinema_session";
 
 export function setSessionCookie(res: NextApiResponse, token: string) {
   res.setHeader("Set-Cookie", stringifySetCookie({ name: sessionCookie, value: token, httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 7 * 24 * 60 * 60 }));
