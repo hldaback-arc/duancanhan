@@ -65,6 +65,7 @@ function toTicket(row: any): Ticket {
 
 export default function Cinema() {
   const [checkingAccess, setCheckingAccess] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isViewChanging, setIsViewChanging] = useState(false);
   const [view, setView] = useState<View>("overview");
   const [movies, setMovies] = useState(moviesSeed);
@@ -149,7 +150,7 @@ export default function Cinema() {
     }, 120);
   };
   return <div className="cinema-app">
-    <aside className="cinema-sidebar"><Link href="/" className="cinema-logo"><span className="brand-symbol">LT</span><span>LOTUS<br /><small>CINEMA</small></span></Link><p className="sidebar-label">QUẢN TRỊ RẠP</p><nav className="cinema-nav" aria-label="Điều hướng quản trị">
+    <aside className={`cinema-sidebar${isSidebarOpen ? " cinema-sidebar-open" : ""}`}><div className="cinema-sidebar-head"><Link href="/" className="cinema-logo"><span className="brand-symbol">LT</span><span>LOTUS<br /><small>CINEMA</small></span></Link><button className="sidebar-toggle" type="button" aria-label={isSidebarOpen ? "Thu gọn menu" : "Mở rộng menu"} aria-expanded={isSidebarOpen} onClick={() => setIsSidebarOpen((current) => !current)}>{isSidebarOpen ? "‹" : "›"}</button></div><p className="sidebar-label">QUẢN TRỊ RẠP</p><nav className="cinema-nav" aria-label="Điều hướng quản trị">
       <button className={`nav-item ${view === "overview" ? "active" : ""}`} onClick={() => nav("overview")} type="button">▦ <span>Tổng quan</span></button>
       <button className={`nav-item ${view === "movies" ? "active" : ""}`} onClick={() => nav("movies")} type="button">▣ <span>Quản lý phim</span><b>{movies.length}</b></button>
       <button className={`nav-item ${view === "rooms" ? "active" : ""}`} onClick={() => nav("rooms")} type="button">▤ <span>Phòng chiếu</span><b>{rooms.length}</b></button>
