@@ -10,12 +10,9 @@ export default function Home() {
 
   useEffect(() => {
     fetch("/api/auth/me")
-      .then(async (response) => {
-        if (response.ok) {
-          const result = await response.json();
-          const canManage = result.user?.role === "admin" || (result.user?.approvalStatus === "approved" && result.user?.managementRole !== "none");
-          window.location.href = canManage ? "/cap-2" : "/profile";
-        } else setCheckingSession(false);
+      .then((response) => {
+        if (response.ok) window.location.href = "/cap-2";
+        else setCheckingSession(false);
       })
       .catch(() => setCheckingSession(false));
   }, []);
@@ -32,10 +29,7 @@ export default function Home() {
       });
       const result = await response.json();
       if (!response.ok) setError(result.message || "Không thể đăng nhập.");
-      else {
-        const canManage = result.user?.role === "admin" || (result.user?.approvalStatus === "approved" && result.user?.managementRole !== "none");
-        window.location.href = canManage ? "/cap-2" : "/profile";
-      }
+      else window.location.href = "/cap-2";
     } catch {
       setError("Không thể kết nối đến máy chủ.");
     } finally {
