@@ -7,6 +7,8 @@ type UserRow = {
   email: string;
   phone: string;
   role: "admin" | "customer";
+  approval_status: "pending" | "approved" | "rejected";
+  management_role: "none" | "operator" | "manager";
   password_hash: string;
   password_salt: string;
 };
@@ -23,7 +25,7 @@ function hashPassword(password: string, salt = crypto.randomBytes(16).toString("
 }
 
 export function toPublicUser(user: PublicUser) {
-  return { id: user.id, fullName: user.full_name, email: user.email, phone: user.phone, role: user.role };
+  return { id: user.id, fullName: user.full_name, email: user.email, phone: user.phone, role: user.role, approvalStatus: user.approval_status, managementRole: user.management_role };
 }
 
 export async function createUser(input: { fullName: string; email: string; phone: string; password: string }) {
@@ -33,6 +35,8 @@ export async function createUser(input: { fullName: string; email: string; phone
     email: input.email,
     phone: input.phone,
     role: "customer",
+    approval_status: "pending",
+    management_role: "none",
     password_hash: password.hash,
     password_salt: password.salt,
   }).select("id").single();
@@ -50,7 +54,7 @@ export async function findUserForLogin(email: string, password: string) {
 }
 
 export function getUserById(id: number) {
-  return supabase.from("users").select("id, full_name, email, phone, role").eq("id", id).maybeSingle<PublicUser>().then(({ data, error }) => {
+  return supabase.from("users").select("id, full_name, email, phone, role, approval_status, management_role").eq("id", id).maybeSingle<PublicUser>().then(({ data, error }) => {
     if (error) throw error;
     return data ?? undefined;
   });

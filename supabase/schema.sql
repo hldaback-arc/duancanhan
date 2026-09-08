@@ -4,6 +4,8 @@ create table if not exists public.users (
   email text not null unique,
   phone text not null,
   role text not null default 'customer' check (role in ('admin', 'customer')),
+  approval_status text not null default 'pending' check (approval_status in ('pending', 'approved', 'rejected')),
+  management_role text not null default 'none' check (management_role in ('none', 'operator', 'manager')),
   password_hash text not null,
   password_salt text not null,
   created_at timestamptz not null default now()
@@ -16,6 +18,8 @@ create table if not exists public.sessions (
 );
 
 alter table public.users add column if not exists phone text not null default '';
+alter table public.users add column if not exists approval_status text not null default 'pending';
+alter table public.users add column if not exists management_role text not null default 'none';
 alter table public.users drop column if exists student_id;
 alter table public.users drop column if exists class_name;
 

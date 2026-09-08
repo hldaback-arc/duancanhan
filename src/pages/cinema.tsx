@@ -8,7 +8,8 @@ type Seat = { id: string; row: string; number: number; type: "Thường"; status
 type LoyaltyCustomer = { name: string; email: string; points: number; tier: string; joined: string };
 type Showtime = { id: string; movieId: string; roomId: string; date: string; start: string; end: string; price: number };
 type Ticket = { id: string; customer: string; email: string; showtimeId: string; movie: string; seats: string; amount: number; status: string; paymentMethod: string };
-type View = "overview" | "movies" | "rooms" | "seats" | "schedules" | "tickets" | "customers" | "booking" | "revenue";
+type View = "overview" | "movies" | "rooms" | "seats" | "schedules" | "tickets" | "customers" | "booking" | "revenue" | "permissions";
+type ManagementUser = { id: number; full_name: string; email: string; phone: string; role: "admin" | "customer"; approval_status: "pending" | "approved" | "rejected"; management_role: "none" | "operator" | "manager"; created_at: string };
 type MovieMap = { get(key: string): Movie };
 type RoomMap = { get(key: string): Room };
 
@@ -73,6 +74,8 @@ export default function Cinema() {
   const [showtimes, setShowtimes] = useState(showtimesSeed);
   const [customers, setCustomers] = useState(customersSeed);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [managementUsers, setManagementUsers] = useState<ManagementUser[]>([]);
+  const [currentUser, setCurrentUser] = useState<{ role: string }>({ role: "customer" });
   const [query, setQuery] = useState("");
   const [selectedRoomId, setSelectedRoomId] = useState("R-01");
   const [seats, setSeats] = useState<Seat[]>(makeSeats(roomsSeed[0]));
@@ -86,8 +89,10 @@ export default function Cinema() {
   useEffect(() => {
     fetch("/api/auth/me").then(async (response) => {
       const result = response.ok ? await response.json() : undefined;
-      if (!result?.user || result.user.role !== "admin") window.location.href = "/";
+      if (!result?.user) window.location.href = "/";
+      else if (result.user.role !== "admin" && !(result.user.approvalStatus === "approved" && result.user.managementRole !== "none")) window.location.href = "/profile";
       else {
+        setCurrentUser(result.user);
         const dataResponse = await fetch("/api/cinema");
         if (!dataResponse.ok) throw new Error("Không thể tải dữ liệu rạp.");
         const data = await dataResponse.json();
@@ -97,6 +102,7 @@ export default function Cinema() {
         const moviesById = new Map((data.movies || []).map((item: any) => [item.id, item.title]));
         const showtimesById = new Map((data.showtimes || []).map((item: any) => [item.id, item.movie_id]));
         setTickets((data.tickets || []).map((item: any) => toTicket({ ...item, movie: moviesById.get(showtimesById.get(item.showtime_id)) || "" })));
+        setManagementUsers(data.users || []);
         setCheckingAccess(false);
       }
     }).catch(() => { window.location.href = "/"; });
@@ -158,6 +164,7 @@ export default function Cinema() {
       <button className={`nav-item ${view === "schedules" ? "active" : ""}`} onClick={() => nav("schedules")} type="button">▥ <span>Lịch chiếu</span><b>{showtimes.length}</b></button>
       <button className={`nav-item ${view === "tickets" ? "active" : ""}`} onClick={() => nav("tickets")} type="button">◇ <span>Quản lý vé</span><b>{todayTickets}</b></button>
       <button className={`nav-item ${view === "customers" ? "active" : ""}`} onClick={() => nav("customers")} type="button">✦ <span>Tích điểm</span><b>980</b></button>
+      {currentUser.role === "admin" && <button className={`nav-item ${view === "permissions" ? "active" : ""}`} onClick={() => nav("permissions")} type="button">♙ <span>Cấp quyền</span><b>{managementUsers.filter((user) => user.approval_status === "pending").length}</b></button>}
       <button className={`nav-item ${view === "booking" ? "active" : ""}`} onClick={() => nav("booking")} type="button">◇ <span>Đặt vé</span></button>
       <button className={`nav-item ${view === "revenue" ? "active" : ""}`} onClick={() => nav("revenue")} type="button">↗ <span>Doanh thu</span></button>
     </nav><div className="sidebar-bottom"><Link href="/profile">⚙ Cài đặt</Link><Link href="/">↪ Đăng xuất</Link></div></aside>
@@ -170,6 +177,7 @@ export default function Cinema() {
       {view === "schedules" && <ScheduleManager showtimes={showtimes} movieMap={movieMap} roomMap={roomMap} onAdd={() => setModal("showtime")} />}
       {view === "tickets" && <TicketManager tickets={tickets} onExport={exportTickets} />}
       {view === "customers" && <><RewardsVouchers customers={customers} onRedeem={redeemVoucher} /><CustomerManager customers={customers} setCustomers={setCustomers} onExport={exportCustomers} /></>}
+      {view === "permissions" && currentUser.role === "admin" && <PermissionManager users={managementUsers} onUpdate={async (userId, managementRole) => { try { const saved = await postCinemaData("permission", { userId, managementRole }); setManagementUsers((current) => current.map((user) => user.id === userId ? saved : user)); setNotice("Đã cập nhật quyền quản lý."); } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể cập nhật quyền."); } }} />}
       {view === "booking" && <BookingFlow step={bookingStep} showtimes={showtimes} movieMap={movieMap} roomMap={roomMap} selectedShowtime={selectedShowtime} selectedSeats={selectedSeats} seats={seats} total={total} paymentMethod={paymentMethod} onShowtime={(id) => { setSelectedShowtime(id); setBookingStep("seats"); const show = showtimes.find((item) => item.id === id); if (show) changeRoom(show.roomId); }} onToggle={toggleSeat} onPayment={setPaymentMethod} onNext={() => setBookingStep(bookingStep === "seats" ? "payment" : "seats")} onFinish={finishPayment} />}
       {view === "revenue" && <Revenue />}
       <footer className="cinema-footer">© 2026 Lotus Cinema <span>Hệ thống quản lý rạp chiếu phim</span></footer>
@@ -188,6 +196,19 @@ function CustomerManager({ customers, setCustomers, onExport }: { customers: Loy
   function addCustomer(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const data = new FormData(event.currentTarget); const points = Number(data.get("points") || 0); setCustomers([...customers, { name: String(data.get("name")), email: String(data.get("email")), points, tier: loyaltyTier(points), joined: "08/09/2026" }]); setShowForm(false); }
   return <><Heading title="Chương trình tích điểm" action="Xuất danh sách" onAction={onExport} /><section className="management-panel"><div className="loyalty-banner"><span>✦</span><div><strong>Lotus Rewards</strong><small>1 điểm cho mỗi 1.000đ thanh toán · Điểm dùng đổi vé và combo</small></div><b>{customers.length + 977} thành viên</b></div>{showForm && <form className="loyalty-add-form" onSubmit={addCustomer}><label>Họ và tên<input name="name" placeholder="Nguyễn Văn A" required /></label><label>Email<input name="email" type="email" placeholder="email@example.com" required /></label><label>Điểm khởi tạo<input name="points" type="number" min="0" defaultValue="0" /></label><button className="primary-button" type="submit">Lưu thành viên</button><button className="filter-button" onClick={() => setShowForm(false)} type="button">Hủy</button></form>}<div className="panel-toolbar"><label className="search-box">⌕<input placeholder="Tìm tên hoặc email thành viên..." /></label><span className="customer-count">Tổng điểm đang lưu hành: {customers.reduce((sum, customer) => sum + customer.points, 0).toLocaleString("vi-VN")}</span><button className="filter-button" onClick={() => setShowForm(true)} type="button">+ Thêm thành viên</button></div><div className="table-wrap"><table><thead><tr><th>THÀNH VIÊN</th><th>ĐIỂM TÍCH LŨY</th><th>HẠNG</th><th>NGÀY THAM GIA</th><th>TRẠNG THÁI</th></tr></thead><tbody>{customers.map((customer) => <tr key={customer.email}><td><div className="customer-cell"><span>{customer.name.slice(0, 2).toUpperCase()}</span><strong>{customer.name}<small>{customer.email}</small></strong></div></td><td><strong className="points-value">{customer.points.toLocaleString("vi-VN")} điểm</strong></td><td><span className={`tier tier-${customer.tier.toLowerCase()}`}>{customer.tier}</span></td><td>{customer.joined}</td><td><span className="status status-live"><i />Đang hoạt động</span></td></tr>)}</tbody></table></div></section></>;
 }
+function PermissionManager({ users, onUpdate }: { users: ManagementUser[]; onUpdate: (userId: number, managementRole: ManagementUser["management_role"]) => void }) {
+  const pendingUsers = users.filter((user) => user.role !== "admin");
+  return <>
+    <div className="cinema-heading"><div><p className="section-label">KIỂM SOÁT TRUY CẬP</p><h2>Cấp quyền quản lý</h2></div><span className="permission-summary">{users.filter((user) => user.approval_status === "pending").length} tài khoản chờ duyệt</span></div>
+    <section className="management-panel permission-panel"><div className="permission-intro"><strong>Phân quyền dashboard</strong><span>Manager được quản lý phim, phòng và lịch chiếu. Operator chỉ xử lý đặt vé và vé.</span></div><div className="table-wrap"><table><thead><tr><th>TÀI KHOẢN</th><th>LIÊN HỆ</th><th>TRẠNG THÁI</th><th>QUYỀN QUẢN LÝ</th><th>THAO TÁC</th></tr></thead><tbody>{pendingUsers.length ? pendingUsers.map((user) => <PermissionRow key={user.id} user={user} onUpdate={onUpdate} />) : <tr><td colSpan={5}>Chưa có tài khoản cần cấp quyền.</td></tr>}</tbody></table></div></section>
+  </>;
+}
+
+function PermissionRow({ user, onUpdate }: { user: ManagementUser; onUpdate: (userId: number, managementRole: ManagementUser["management_role"]) => void }) {
+  const [role, setRole] = useState<ManagementUser["management_role"]>(user.management_role);
+  return <tr><td><div className="customer-cell"><span>{user.full_name.slice(0, 2).toUpperCase()}</span><strong>{user.full_name}<small>{user.email}</small></strong></div></td><td>{user.phone || "Chưa cập nhật"}</td><td><span className={`status ${user.approval_status === "approved" ? "status-live" : user.approval_status === "rejected" ? "status-maintenance" : "status-upcoming"}`}><i />{user.approval_status === "approved" ? "Đã duyệt" : user.approval_status === "rejected" ? "Đã từ chối" : "Chờ duyệt"}</span></td><td><select className="permission-select" value={role} onChange={(event) => setRole(event.target.value as ManagementUser["management_role"])}><option value="none">Chưa cấp quyền</option><option value="operator">Operator · Đặt vé</option><option value="manager">Manager · Vận hành</option></select></td><td><button className="filter-button" type="button" onClick={() => onUpdate(user.id, role)}>{role === "none" ? "Từ chối / thu hồi" : "Lưu quyền"}</button></td></tr>;
+}
+
 function SeatManager({ rooms, roomId, seats, selectedSeats, onRoomChange, onToggle, onAddSeat }: { rooms: Room[]; roomId: string; seats: Seat[]; selectedSeats: string[]; onRoomChange: (id: string) => void; onToggle: (seat: Seat) => void; onAddSeat: () => void }) {
   return <><Heading title="Quản lý ghế" action="+ Thêm ghế" onAction={onAddSeat} /><section className="seat-workspace"><div className="seat-toolbar"><label>Phòng chiếu<select value={roomId} onChange={(event) => onRoomChange(event.target.value)}>{rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}</select></label><span className="seat-legend"><i className="seat-dot empty" /> Trống <i className="seat-dot selected" /> Đang chọn <i className="seat-dot booked" /> Đã đặt</span></div><div className="screen-wide">MÀN HÌNH</div><div className="seat-map large-seat-map">{seats.map((seat) => <button className={`seat-button ${seat.status === "Đã đặt" ? "seat-booked" : "seat-empty"} ${selectedSeats.includes(seat.id) ? "seat-selected" : ""}`} key={seat.id} onClick={() => onToggle(seat)} type="button">{seat.id}</button>)}</div><div className="seat-detail"><div><small>GHẾ ĐANG CHỌN</small><strong>{selectedSeats.length ? selectedSeats.join(", ") : "Chưa chọn ghế"}</strong></div><div><small>THAO TÁC</small><span>Chọn ghế để xem thông tin và thay đổi trạng thái</span></div></div></section></>;
 }
