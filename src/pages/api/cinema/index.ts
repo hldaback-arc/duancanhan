@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     else if (action === "room") result = await supabase.from("rooms").insert(data).select("*").single();
     else if (action === "showtime") result = await supabase.from("showtimes").insert(data).select("*").single();
     else if (action === "ticket") {
-      result = await supabase.from("tickets").insert({ ...data, user_id: admin.id, customer_name: admin.fullName, customer_email: admin.email }).select("*").single();
+      result = await supabase.from("tickets").insert({ ...data, user_id: admin.id, customer_name: admin.full_name, customer_email: admin.email }).select("*").single();
     } else return res.status(400).json({ message: "Loại dữ liệu không hợp lệ." });
     if (result.error) throw result.error;
     return res.status(201).json({ item: result.data });
