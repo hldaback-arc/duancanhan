@@ -12,7 +12,7 @@
 
 ## Tài khoản quản trị
 
-Script `npm run reset-admin` sẽ tạo lại tài khoản admin trên Supabase. Chỉ chạy khi bạn chủ động muốn reset dữ liệu tài khoản và đã cấu hình key server.
+Đặt `ADMIN_EMAIL` và `ADMIN_PASSWORD` trong `.env.local`, sau đó chạy `npm run reset-admin` để tạo hoặc cập nhật riêng tài khoản admin trên Supabase. Script không xóa dữ liệu người dùng khác.
 
 ## Các khu vực chính
 
