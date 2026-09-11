@@ -44,7 +44,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     else if (action === "room") result = await supabase.from("rooms").insert(data).select("*").single();
     else if (action === "showtime") result = await supabase.from("showtimes").insert(data).select("*").single();
     else if (action === "ticket") {
+      const existing = await supabase.from("tickets").select("seats").eq("showtime_id", data.showtime_id);
+      if (existing.error) throw existing.error;
+      const bookedSeats = new Set((existing.data ?? []).flatMap((ticket) => ticket.seats ?? []));
+      const requestedSeats = Array.isArray(data.seats) ? data.seats : [];
+      const conflict = requestedSeats.find((seat: string) => bookedSeats.has(seat));
+      if (conflict) return res.status(409).json({ message: `Ghế ${conflict} vừa được đặt. Vui lòng chọn ghế khác.` });
       result = await supabase.from("tickets").insert({ ...data, user_id: admin.id, customer_name: admin.full_name, customer_email: admin.email }).select("*").single();
+    } else if (action === "delete") {
+      const table = data.table as string;
+      if (!["movies", "rooms", "showtimes", "tickets"].includes(table)) return res.status(400).json({ message: "Loại dữ liệu không hợp lệ." });
+      result = await supabase.from(table).delete().eq("id", data.id);
+    } else if (action === "update") {
+      const table = data.table as string;
+      if (!["movies", "rooms", "showtimes", "tickets"].includes(table)) return res.status(400).json({ message: "Loại dữ liệu không hợp lệ." });
+      const { table: _table, id, ...changes } = data;
+      if (table === "tickets" && changes.showtime_id && Array.isArray(changes.seats)) {
+        const existing = await supabase.from("tickets").select("id,seats").eq("showtime_id", changes.showtime_id).neq("id", id);
+        if (existing.error) throw existing.error;
+        const bookedSeats = new Set((existing.data ?? []).flatMap((ticket) => ticket.seats ?? []));
+        const conflict = changes.seats.find((seat: string) => bookedSeats.has(seat));
+        if (conflict) return res.status(409).json({ message: `Ghế ${conflict} đã được đặt trong suất chiếu này.` });
+      }
+      result = await supabase.from(table).update(changes).eq("id", id).select("*").single();
     } else return res.status(400).json({ message: "Loại dữ liệu không hợp lệ." });
     if (result.error) throw result.error;
     return res.status(201).json({ item: result.data });

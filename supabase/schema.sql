@@ -68,10 +68,17 @@ create table if not exists public.tickets (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.customer_points (
+  email text primary key references public.users(email) on delete cascade,
+  points integer not null default 0 check (points >= 0),
+  joined text not null
+);
+
 alter table public.movies enable row level security;
 alter table public.rooms enable row level security;
 alter table public.showtimes enable row level security;
 alter table public.tickets enable row level security;
+alter table public.customer_points enable row level security;
 
 insert into public.movies (id, title, genre, duration, release, status, poster) values
   ('MV-001', 'Avatar 3', 'Sci-Fi', 162, '15/09/2026', 'Đang chiếu', 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=160&q=80'),
