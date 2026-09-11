@@ -44,7 +44,48 @@ export async function createUser(input: { fullName: string; email: string; phone
   return getUserById(data.id);
 }
 
+async function ensureAdminUserFromEnv() {
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword) return;
+
+  const password = await hashPassword(adminPassword);
+  const { data: existingUser, error: fetchError } = await supabase.from("users").select("id").eq("email", adminEmail).maybeSingle<{ id: number }>();
+  if (fetchError) throw fetchError;
+
+  if (existingUser) {
+    const { error: updateError } = await supabase.from("users").update({
+      full_name: "Quản trị viên Lotus Cinema",
+      role: "admin",
+      account_status: "approved",
+      access_level: "manage",
+      password_hash: password.hash,
+      password_salt: password.salt,
+      phone: "",
+    }).eq("id", existingUser.id);
+    if (updateError) throw updateError;
+    return;
+  }
+
+  const { error: insertError } = await supabase.from("users").insert({
+    full_name: "Quản trị viên Lotus Cinema",
+    email: adminEmail,
+    phone: "",
+    role: "admin",
+    account_status: "approved",
+    access_level: "manage",
+    password_hash: password.hash,
+    password_salt: password.salt,
+  });
+  if (insertError) throw insertError;
+}
+
 export async function findUserForLogin(email: string, password: string) {
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  if (adminEmail && email === adminEmail) {
+    await ensureAdminUserFromEnv();
+  }
+
   const { data: user, error } = await supabase.from("users").select("*").eq("email", email).maybeSingle<UserRow>();
   if (error) throw error;
   if (!user) return undefined;
