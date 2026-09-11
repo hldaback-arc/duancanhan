@@ -9,6 +9,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const user = email && password ? await findUserForLogin(email, password) : undefined;
     if (!user) return res.status(401).json({ message: "Email hoặc mật khẩu không đúng." });
+    if (user.account_status === "pending") {
+      setSessionCookie(res, await createSession(user.id));
+      return res.status(403).json({ status: "pending", message: "Tài khoản đang chờ quản trị viên cấp quyền." });
+    }
+    if (user.account_status === "rejected") return res.status(403).json({ status: "rejected", message: "Tài khoản chưa được cấp quyền truy cập." });
     setSessionCookie(res, await createSession(user.id));
     return res.status(200).json({ user: toPublicUser(user) });
   } catch {

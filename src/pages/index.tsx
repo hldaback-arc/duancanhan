@@ -10,9 +10,14 @@ export default function Home() {
 
   useEffect(() => {
     fetch("/api/auth/me")
-      .then((response) => {
-        if (response.ok) window.location.href = "/cap-2";
-        else setCheckingSession(false);
+      .then(async (response) => {
+        if (!response.ok) {
+          setCheckingSession(false);
+          return;
+        }
+        const result = await response.json();
+        if (result.user.accountStatus === "pending") window.location.href = "/pending";
+        else window.location.href = "/cap-2";
       })
       .catch(() => setCheckingSession(false));
   }, []);
@@ -28,8 +33,10 @@ export default function Home() {
         body: JSON.stringify({ email, password }),
       });
       const result = await response.json();
-      if (!response.ok) setError(result.message || "Không thể đăng nhập.");
-      else window.location.href = "/cap-2";
+      if (!response.ok) {
+        if (result.status === "pending") window.location.href = "/pending";
+        else setError(result.message || "Không thể đăng nhập.");
+      } else window.location.href = "/cap-2";
     } catch {
       setError("Không thể kết nối đến máy chủ.");
     } finally {

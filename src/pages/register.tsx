@@ -14,7 +14,7 @@ export default function Register() {
       const response = await fetch("/api/auth/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       const result = await response.json();
       if (!response.ok) setError(result.message || "Không thể tạo tài khoản.");
-      else window.location.href = "/cap-2";
+      else window.location.href = "/pending";
     } catch {
       setError("Không thể kết nối đến máy chủ.");
     } finally {

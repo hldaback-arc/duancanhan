@@ -7,11 +7,19 @@ type CinemaResponse = { movies: unknown[]; rooms: unknown[]; showtimes: unknown[
 async function requireAdmin(req: NextApiRequest, res: NextApiResponse) {
   const user = await requireUser(req, res);
   if (!user) return undefined;
-  if (user.role !== "admin") {
+  if (user.account_status !== "approved") {
+    res.status(403).json({ message: "Tài khoản chưa được cấp quyền sử dụng dữ liệu rạp." });
+    return undefined;
+  }
+  if (user.role !== "admin" && !["booking", "manage"].includes(user.access_level)) {
     res.status(403).json({ message: "Bạn không có quyền quản trị rạp." });
     return undefined;
   }
   return user;
+}
+
+function canManage(user: { role: string; access_level: string }) {
+  return user.role === "admin" || user.access_level === "manage";
 }
 
 async function getCinemaData(): Promise<CinemaResponse> {
@@ -40,6 +48,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { action, data } = req.body ?? {};
     let result;
+    if (["movie", "room", "showtime", "delete", "update"].includes(action) && !canManage(admin)) {
+      return res.status(403).json({ message: "Quyền hiện tại chỉ cho phép đặt vé và in vé." });
+    }
     if (action === "movie") result = await supabase.from("movies").insert(data).select("*").single();
     else if (action === "room") result = await supabase.from("rooms").insert(data).select("*").single();
     else if (action === "showtime") result = await supabase.from("showtimes").insert(data).select("*").single();

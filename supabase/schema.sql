@@ -4,6 +4,8 @@ create table if not exists public.users (
   email text not null unique,
   phone text not null,
   role text not null default 'customer' check (role in ('admin', 'customer')),
+  account_status text not null default 'approved' check (account_status in ('pending', 'approved', 'rejected')),
+  access_level text not null default 'booking' check (access_level in ('manage', 'booking')),
   password_hash text not null,
   password_salt text not null,
   created_at timestamptz not null default now()
@@ -16,6 +18,12 @@ create table if not exists public.sessions (
 );
 
 alter table public.users add column if not exists phone text not null default '';
+alter table public.users add column if not exists account_status text not null default 'approved';
+alter table public.users add column if not exists access_level text not null default 'booking';
+alter table public.users drop constraint if exists users_account_status_check;
+alter table public.users add constraint users_account_status_check check (account_status in ('pending', 'approved', 'rejected'));
+alter table public.users drop constraint if exists users_access_level_check;
+alter table public.users add constraint users_access_level_check check (access_level in ('manage', 'booking'));
 alter table public.users drop column if exists student_id;
 alter table public.users drop column if exists class_name;
 
