@@ -89,8 +89,14 @@ export async function findUserForLogin(email: string, password: string) {
   const { data: user, error } = await supabase.from("users").select("*").eq("email", email).maybeSingle<UserRow>();
   if (error) throw error;
   if (!user) return undefined;
-  const passwordHash = await hashPassword(password, user.password_salt);
-  const matches = crypto.timingSafeEqual(Buffer.from(passwordHash.hash, "hex"), Buffer.from(user.password_hash, "hex"));
+
+  const generatedHash = await hashPassword(password, user.password_salt);
+  const expectedHash = Buffer.from(user.password_hash, "hex");
+  const actualHash = Buffer.from(generatedHash.hash, "hex");
+
+  if (expectedHash.length !== actualHash.length) return undefined;
+
+  const matches = crypto.timingSafeEqual(expectedHash, actualHash);
   return matches ? user : undefined;
 }
 
