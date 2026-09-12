@@ -14,7 +14,15 @@
 
 Đặt `ADMIN_EMAIL` và `ADMIN_PASSWORD` trong `.env.local`, sau đó chạy `npm run reset-admin` để tạo hoặc cập nhật riêng tài khoản admin trên Supabase. Script không xóa dữ liệu người dùng khác.
 
+<<<<<<< HEAD
 ## Các khu vực chính
+=======
+## Validation status
+
+Dự án đã được kiểm tra địa phương với các bước kiểm tra chất lượng chính: lint, type check, unit tests và production build. Đây là trạng thái đang sử dụng để xác nhận repo sẵn sàng cho CI/GitHub và triển khai tiếp theo.
+
+---
+>>>>>>> 05bbb62 (docs: add validation status note)
 
 - `/`: đăng nhập và đăng ký thành viên
 - `/cap-2`: khu vực thành viên
