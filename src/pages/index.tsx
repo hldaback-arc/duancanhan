@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { FormEvent, useEffect, useState } from "react";
 
 export default function Home() {
+  const router = useRouter();
   const [checkingSession, setCheckingSession] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,11 +18,11 @@ export default function Home() {
           return;
         }
         const result = await response.json();
-        if (result.user.accountStatus === "pending") window.location.href = "/pending";
-        else window.location.href = "/cap-2";
+        if (result.user.accountStatus === "pending") router.replace("/pending");
+        else router.replace("/cap-2");
       })
       .catch(() => setCheckingSession(false));
-  }, []);
+  }, [router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -34,9 +36,9 @@ export default function Home() {
       });
       const result = await response.json();
       if (!response.ok) {
-        if (result.status === "pending") window.location.href = "/pending";
+        if (result.status === "pending") router.replace("/pending");
         else setError(result.message || "Không thể đăng nhập.");
-      } else window.location.href = "/cap-2";
+      } else router.replace("/cap-2");
     } catch {
       setError("Không thể kết nối đến máy chủ.");
     } finally {

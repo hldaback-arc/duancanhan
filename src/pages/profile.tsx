@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { FormEvent, useEffect, useState } from "react";
 
 type User = { fullName: string; email: string; phone: string };
 
 export default function Profile() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [form, setForm] = useState<User>({ fullName: "", email: "", phone: "" });
   const [message, setMessage] = useState("");
@@ -14,15 +16,15 @@ export default function Profile() {
     fetch("/api/auth/me")
       .then(async (response) => {
         if (!response.ok) {
-          window.location.href = "/";
+          router.replace("/");
           return;
         }
         const result = await response.json();
         setUser(result.user);
         setForm(result.user);
       })
-      .catch(() => { window.location.href = "/"; });
-  }, []);
+      .catch(() => { router.replace("/"); });
+  }, [router]);
 
   async function save(event: FormEvent) {
     event.preventDefault();
@@ -43,13 +45,13 @@ export default function Profile() {
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/";
+    router.replace("/");
   }
 
   async function deleteAccount() {
     if (!window.confirm("Bạn có chắc muốn xóa tài khoản? Dữ liệu sẽ không thể khôi phục.")) return;
     const response = await fetch("/api/auth/me", { method: "DELETE" });
-    if (response.ok) window.location.href = "/";
+    if (response.ok) router.replace("/");
     else setError("Không thể xóa tài khoản lúc này.");
   }
 

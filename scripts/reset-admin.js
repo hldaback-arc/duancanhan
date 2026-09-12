@@ -1,5 +1,5 @@
-const crypto = require("node:crypto");
-const { createClient } = require("@supabase/supabase-js");
+import crypto from "node:crypto";
+import { createClient } from "@supabase/supabase-js";
 
 if (typeof process.loadEnvFile === "function") process.loadEnvFile(".env.local");
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { FormEvent, useState } from "react";
 
 export default function Register() {
+  const router = useRouter();
   const [form, setForm] = useState({ fullName: "", email: "", phone: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,7 +16,7 @@ export default function Register() {
       const response = await fetch("/api/auth/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       const result = await response.json();
       if (!response.ok) setError(result.message || "Không thể tạo tài khoản.");
-      else window.location.href = "/pending";
+      else router.replace("/pending");
     } catch {
       setError("Không thể kết nối đến máy chủ.");
     } finally {

@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { MouseEvent, useEffect, useState } from "react";
 
 type AccountStatus = "pending" | "approved" | "rejected";
 type PendingUser = { fullName: string; email: string; accountStatus: AccountStatus };
 
 export default function Pending() {
+  const router = useRouter();
   const [user, setUser] = useState<PendingUser | null>(null);
   const [status, setStatus] = useState<AccountStatus>("pending");
   const [loading, setLoading] = useState(true);
@@ -15,7 +17,7 @@ export default function Pending() {
       try {
         const response = await fetch("/api/auth/me");
         if (!response.ok) {
-          window.location.href = "/";
+          router.replace("/");
           return;
         }
         const result = await response.json();
@@ -24,7 +26,7 @@ export default function Pending() {
         setUser(nextUser);
         setStatus(nextUser.accountStatus);
         setLoading(false);
-        if (nextUser.accountStatus === "approved") window.location.href = "/cap-2";
+        if (nextUser.accountStatus === "approved") router.replace("/cap-2");
       } catch {
         if (active) setLoading(false);
       }
@@ -36,11 +38,11 @@ export default function Pending() {
       active = false;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [router]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/";
+    router.replace("/");
   }
 
   async function goToLogin(event: MouseEvent<HTMLAnchorElement>) {

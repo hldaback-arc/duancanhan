@@ -69,7 +69,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } else if (action === "update") {
       const table = data.table as string;
       if (!["movies", "rooms", "showtimes", "tickets"].includes(table)) return res.status(400).json({ message: "Loại dữ liệu không hợp lệ." });
-      const { table: _table, id, ...changes } = data;
+      const { id, ...changes } = data;
+      delete changes.table;
       if (table === "tickets" && changes.showtime_id && Array.isArray(changes.seats)) {
         const existing = await supabase.from("tickets").select("id,seats").eq("showtime_id", changes.showtime_id).neq("id", id);
         if (existing.error) throw existing.error;

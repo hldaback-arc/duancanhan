@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { FormEvent, useEffect, useState } from "react";
 
 export default function ChangePassword() {
+  const router = useRouter();
   const [checkingSession, setCheckingSession] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
@@ -11,11 +13,11 @@ export default function ChangePassword() {
   useEffect(() => {
     fetch("/api/auth/me")
       .then((response) => {
-        if (!response.ok) window.location.href = "/";
+        if (!response.ok) router.replace("/");
         else setCheckingSession(false);
       })
-      .catch(() => { window.location.href = "/"; });
-  }, []);
+      .catch(() => { router.replace("/"); });
+  }, [router]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();

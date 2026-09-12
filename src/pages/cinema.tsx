@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect, @typescript-eslint/ban-ts-comment, @next/next/no-img-element */
 // @ts-nocheck
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type Movie = { id: string; title: string; genre: string; duration: number; release: string; status: "Đang chiếu" | "Sắp chiếu"; poster: string };
@@ -77,6 +79,7 @@ function toTicket(row: any): Ticket {
 }
 
 export default function Cinema() {
+  const router = useRouter();
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [canManage, setCanManage] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -102,28 +105,30 @@ export default function Cinema() {
   useEffect(() => {
     fetch("/api/auth/me").then(async (response) => {
       const result = response.ok ? await response.json() : undefined;
-      if (!result?.user || result.user.accountStatus !== "approved") window.location.href = result?.user?.accountStatus === "pending" ? "/pending" : "/";
-      else {
-        const administrator = result.user.role === "admin";
-        setIsAdmin(administrator);
-        setCanManage(administrator || result.user.accessLevel === "manage");
-        const dataResponse = await fetch("/api/cinema");
-        if (!dataResponse.ok) throw new Error("Không thể tải dữ liệu rạp.");
-        const data = await dataResponse.json();
-        if (data.movies?.length) setMovies(data.movies);
-        if (data.rooms?.length) setRooms(data.rooms);
-        if (data.showtimes?.length) setShowtimes(data.showtimes.map((item: any) => ({ id: item.id, movieId: item.movie_id, roomId: item.room_id, date: item.date, start: item.start_time, end: item.end_time, price: item.price })));
-        const moviesById = new Map((data.movies || []).map((item: any) => [item.id, item.title]));
-        const showtimesById = new Map((data.showtimes || []).map((item: any) => [item.id, item.movie_id]));
-        setTickets((data.tickets || []).map((item: any) => toTicket({ ...item, movie: moviesById.get(showtimesById.get(item.showtime_id)) || "" })));
-        if (administrator) {
-          const usersResponse = await fetch("/api/admin/users");
-          if (usersResponse.ok) setAccountUsers((await usersResponse.json()).users || []);
-        }
-        setCheckingAccess(false);
+      if (!result?.user || result.user.accountStatus !== "approved") {
+        const destination = result?.user?.accountStatus === "pending" ? "/pending" : "/";
+        router.replace(destination);
+        return;
       }
-    }).catch(() => { window.location.href = "/"; });
-  }, []);
+      const administrator = result.user.role === "admin";
+      setIsAdmin(administrator);
+      setCanManage(administrator || result.user.accessLevel === "manage");
+      const dataResponse = await fetch("/api/cinema");
+      if (!dataResponse.ok) throw new Error("Không thể tải dữ liệu rạp.");
+      const data = await dataResponse.json();
+      if (data.movies?.length) setMovies(data.movies);
+      if (data.rooms?.length) setRooms(data.rooms);
+      if (data.showtimes?.length) setShowtimes(data.showtimes.map((item: any) => ({ id: item.id, movieId: item.movie_id, roomId: item.room_id, date: item.date, start: item.start_time, end: item.end_time, price: item.price })));
+      const moviesById = new Map((data.movies || []).map((item: any) => [item.id, item.title]));
+      const showtimesById = new Map((data.showtimes || []).map((item: any) => [item.id, item.movie_id]));
+      setTickets((data.tickets || []).map((item: any) => toTicket({ ...item, movie: moviesById.get(showtimesById.get(item.showtime_id)) || "" })));
+      if (administrator) {
+        const usersResponse = await fetch("/api/admin/users");
+        if (usersResponse.ok) setAccountUsers((await usersResponse.json()).users || []);
+      }
+      setCheckingAccess(false);
+    }).catch(() => { router.replace("/"); });
+  }, [router]);
 
   useEffect(() => {
     const returnToBooking = () => {
@@ -138,7 +143,6 @@ export default function Cinema() {
   const filteredMovies = movies.filter((movie) => `${movie.title} ${movie.id}`.toLowerCase().includes(query.toLowerCase()));
   const currentShowtime = showtimes.find((showtime) => showtime.id === selectedShowtime) || showtimes[0];
   const selectedMovie = currentShowtime ? movieMap.get(currentShowtime.movieId) : movies[0];
-  const selectedRoom = currentShowtime ? roomMap.get(currentShowtime.roomId) : rooms[0];
   const total = currentShowtime ? selectedSeats.length * currentShowtime.price : 0;
 
   useEffect(() => {
@@ -197,7 +201,7 @@ export default function Cinema() {
   function startNewBooking() { setSelectedSeats([]); setBookingStep("showtime"); setView("booking"); setNotice(""); }
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/";
+    router.replace("/");
   }
   async function updateAccountStatus(userId: number, status: AccountUser["account_status"], accessLevel: AccountUser["access_level"]) {
     try {
@@ -267,11 +271,6 @@ function AdminSummary({ movies, rooms }: { movies: Movie[]; rooms: Room[] }) { c
 function Overview({ movies, rooms, showtimes, onNavigate }: { movies: Movie[]; rooms: Room[]; showtimes: Showtime[]; onNavigate: (view: View) => void }) { return <><section className="cinema-stats"><div><span className="stat-icon orange">▣</span><p>Phim đang chiếu</p><strong>{movies.filter((movie) => movie.status === "Đang chiếu").length}</strong><small>Danh mục hiện tại</small></div><div><span className="stat-icon green">▤</span><p>Phòng hoạt động</p><strong>{rooms.filter((room) => room.status === "Hoạt động").length}<em>/{rooms.length}</em></strong><small>Công suất sẵn sàng</small></div><div><span className="stat-icon blue">▰</span><p>Vé đã bán hôm nay</p><strong>{todayTickets}</strong><small>Doanh thu {todayRevenue.toFixed(1).replace(".", ",")} triệu</small></div><div><span className="stat-icon violet">↗</span><p>Doanh thu hôm nay</p><strong>{todayRevenue.toFixed(1).replace(".", ",")}<em>tr</em></strong><small>236 vé · giá bình quân 80.000đ</small></div></section><div className="quick-grid"><button onClick={() => onNavigate("seats")} type="button"><strong>⌗</strong><span><b>Sơ đồ ghế</b><small>Chọn và quản lý trạng thái ghế</small></span>→</button><button onClick={() => onNavigate("schedules")} type="button"><strong>▥</strong><span><b>Lịch chiếu</b><small>{showtimes.length} suất chiếu đang hoạt động</small></span>→</button><button onClick={() => onNavigate("booking")} type="button"><strong>◇</strong><span><b>Đặt vé mẫu</b><small>Kiểm tra luồng chọn ghế và thanh toán</small></span>→</button></div><Revenue /></>; }
 function TicketManager({ tickets, onExport, onDelete, onEdit }: { tickets: Ticket[]; onExport: () => void; onDelete: (id: string) => void; onEdit: (ticket: Ticket) => void }) { return <><Heading title="Quản lý vé" action="Xuất báo cáo" onAction={onExport} /><section className="management-panel"><div className="panel-toolbar"><label className="search-box">⌕<input placeholder="Tìm mã vé, tên khách hàng..." /></label><button className="filter-button" type="button">▣ Tất cả trạng thái</button></div><div className="table-wrap"><table><thead><tr><th>MÃ VÉ</th><th>KHÁCH HÀNG</th><th>PHIM</th><th>GHẾ</th><th>THÀNH TIỀN</th><th>TRẠNG THÁI</th><th /></tr></thead><tbody>{tickets.map((ticket) => <tr key={ticket.id}><td><strong>{ticket.id}</strong></td><td>{ticket.customer}</td><td>{ticket.movie}</td><td>{ticket.seats}</td><td>{money(ticket.amount)}</td><td><span className={`status ${ticket.status === "Đã thanh toán" ? "status-live" : "status-upcoming"}`}><i />{ticket.status}</span></td><td><button className="table-action" type="button" onClick={() => onEdit(ticket)}>Sửa</button><button className="table-action danger" type="button" onClick={() => onDelete(ticket.id)}>Xóa</button></td></tr>)}</tbody></table></div></section></>; }
 function RewardsVouchers({ customers, onRedeem }: { customers: LoyaltyCustomer[]; onRedeem: (email: string, cost: number, code: string) => void }) { const [selectedEmail, setSelectedEmail] = useState(customers[0]?.email || ""); const copy = (code: string) => navigator.clipboard?.writeText(code); const vouchers = [{ tier: "ĐỒNG", code: "LOTUS10", detail: "Giảm 10% vé · Trừ 100 điểm", cost: 100, tone: "bronze" }, { tier: "BẠC", code: "LOTUS15", detail: "Giảm 15% vé · Trừ 500 điểm", cost: 500, tone: "silver" }, { tier: "VÀNG", code: "LOTUS20", detail: "Giảm 20% + bắp nước · Trừ 900 điểm", cost: 900, tone: "gold" }]; return <section className="reward-vouchers"><div className="voucher-toolbar"><strong>Dùng voucher khuyến mãi</strong><label>Thành viên<select value={selectedEmail} onChange={(event) => setSelectedEmail(event.target.value)}>{customers.map((customer) => <option key={customer.email} value={customer.email}>{customer.name} · {customer.points} điểm</option>)}</select></label></div>{vouchers.map((voucher) => <article className={`reward-voucher ${voucher.tone}`} key={voucher.code}><span>{voucher.tier}</span><strong>{voucher.code}</strong><small>{voucher.detail}</small><div><button onClick={() => copy(voucher.code)} type="button">Sao chép</button><button onClick={() => onRedeem(selectedEmail, voucher.cost, voucher.code)} type="button">Dùng mã</button></div></article>)}</section>; }
-function CustomerEditLauncher({ customers, onEdit }: { customers: LoyaltyCustomer[]; onEdit: (customer: LoyaltyCustomer) => void }) { const [email, setEmail] = useState(customers[0]?.email || ""); return <div className="customer-edit-launcher"><label>Chọn thành viên để cập nhật<select value={email} onChange={(event) => setEmail(event.target.value)}>{customers.map((customer) => <option key={customer.email} value={customer.email}>{customer.name}</option>)}</select></label><button className="filter-button" type="button" onClick={() => { const customer = customers.find((item) => item.email === email); if (customer) onEdit(customer); }}>Sửa thông tin tích điểm</button></div>; }
-function AccountApproval({ users, onStatusChange }: { users: AccountUser[]; onStatusChange: (id: number, status: AccountUser["account_status"]) => void }) {
-  const pendingCount = users.filter((user) => user.account_status === "pending").length;
-  return <><Heading title="Cấp quyền tài khoản" action={`${pendingCount} hồ sơ chờ duyệt`} onAction={() => undefined} /><section className="management-panel"><div className="approval-admin-banner"><span>✓</span><div><strong>Kiểm duyệt thành viên mới</strong><small>Xác nhận quyền truy cập trước khi tài khoản có thể sử dụng hệ thống.</small></div><b>{pendingCount} chờ xử lý</b></div><div className="table-wrap"><table><thead><tr><th>THÀNH VIÊN</th><th>LIÊN HỆ</th><th>NGÀY ĐĂNG KÝ</th><th>TRẠNG THÁI</th><th>THAO TÁC</th></tr></thead><tbody>{users.map((user) => <tr key={user.id}><td><div className="customer-cell"><span>{user.full_name.slice(0, 2).toUpperCase()}</span><strong>{user.full_name}<small>{user.email}</small></strong></div></td><td>{user.phone || "Chưa cập nhật"}</td><td>{new Date(user.created_at).toLocaleDateString("vi-VN")}</td><td><span className={`status ${user.account_status === "approved" ? "status-live" : user.account_status === "pending" ? "status-upcoming" : "status-rejected"}`}><i />{user.account_status === "approved" ? "Đã cấp quyền" : user.account_status === "pending" ? "Chờ cấp quyền" : "Từ chối"}</span></td><td><button className="table-action approve-action" type="button" onClick={() => onStatusChange(user.id, "approved")} disabled={user.account_status === "approved"}>Cấp quyền</button><button className="table-action danger" type="button" onClick={() => onStatusChange(user.id, "rejected")} disabled={user.account_status === "rejected"}>Từ chối</button></td></tr>)}</tbody></table>{!users.length && <p className="empty-state">Chưa có tài khoản thành viên nào đăng ký.</p>}</div></section></>;
-}
 function AccountApprovalWithPermissions({ users, onStatusChange }: { users: AccountUser[]; onStatusChange: (id: number, status: AccountUser["account_status"], accessLevel: AccountUser["access_level"]) => void }) {
   const pendingCount = users.filter((user) => user.account_status === "pending").length;
   const [levels, setLevels] = useState<Record<number, AccountUser["access_level"]>>(() => Object.fromEntries(users.map((user) => [user.id, user.access_level])));
