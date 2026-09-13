@@ -32,12 +32,10 @@ export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.lang = locale;
+    document.documentElement.style.colorScheme = theme;
     window.localStorage.setItem("lotus-theme", theme);
-  }, [theme, locale]);
-
-  useEffect(() => {
     window.localStorage.setItem("lotus-locale", locale);
-  }, [locale]);
+  }, [theme, locale]);
 
   return (
     <>
