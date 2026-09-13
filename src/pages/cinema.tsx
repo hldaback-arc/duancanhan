@@ -36,6 +36,18 @@ const showtimesSeed: Showtime[] = [
   { id: "ST-001", movieId: "MV-001", roomId: "R-01", date: "15/09/2026", start: "18:00", end: "20:42", price: 80000 },
   { id: "ST-002", movieId: "MV-001", roomId: "R-02", date: "15/09/2026", start: "20:00", end: "22:42", price: 100000 },
   { id: "ST-003", movieId: "MV-002", roomId: "R-01", date: "15/09/2026", start: "19:30", end: "21:20", price: 70000 },
+  { id: "ST-004", movieId: "MV-005", roomId: "R-01", date: "16/09/2026", start: "18:30", end: "20:31", price: 90000 },
+  { id: "ST-005", movieId: "MV-005", roomId: "R-02", date: "16/09/2026", start: "20:15", end: "22:16", price: 95000 },
+  { id: "ST-006", movieId: "MV-006", roomId: "R-01", date: "17/09/2026", start: "19:00", end: "21:57", price: 85000 },
+  { id: "ST-007", movieId: "MV-006", roomId: "R-02", date: "17/09/2026", start: "21:10", end: "23:07", price: 98000 },
+  { id: "ST-008", movieId: "MV-007", roomId: "R-02", date: "18/09/2026", start: "18:45", end: "20:43", price: 82000 },
+  { id: "ST-009", movieId: "MV-007", roomId: "R-01", date: "18/09/2026", start: "20:50", end: "22:48", price: 89000 },
+  { id: "ST-010", movieId: "MV-008", roomId: "R-01", date: "19/09/2026", start: "18:15", end: "20:30", price: 95000 },
+  { id: "ST-011", movieId: "MV-008", roomId: "R-02", date: "19/09/2026", start: "20:40", end: "22:55", price: 110000 },
+  { id: "ST-012", movieId: "MV-009", roomId: "R-01", date: "20/09/2026", start: "19:15", end: "20:41", price: 75000 },
+  { id: "ST-013", movieId: "MV-009", roomId: "R-02", date: "20/09/2026", start: "21:00", end: "22:26", price: 82000 },
+  { id: "ST-014", movieId: "MV-010", roomId: "R-01", date: "21/09/2026", start: "18:20", end: "20:20", price: 87000 },
+  { id: "ST-015", movieId: "MV-010", roomId: "R-02", date: "21/09/2026", start: "20:35", end: "22:35", price: 93000 },
 ];
 const customersSeed: LoyaltyCustomer[] = [{ name: "Nguyễn Minh Anh", email: "minhanh@email.com", points: 960, tier: "Vàng", joined: "02/08/2026" }, { name: "Trần Hoàng Nam", email: "hoangnam@email.com", points: 720, tier: "Bạc", joined: "18/08/2026" }, { name: "Lê Thu Hà", email: "thuha@email.com", points: 350, tier: "Đồng", joined: "01/09/2026" }];
 const revenueSeed = [14.2, 16.8, 15.6, 18.9, 21.7, 20.4, 17.9];
@@ -105,6 +117,7 @@ export default function Cinema() {
   const [seats, setSeats] = useState<Seat[]>(makeSeats(roomsSeed[0]));
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [selectedShowtime, setSelectedShowtime] = useState(showtimesSeed[0].id);
+  const [selectedMovieId, setSelectedMovieId] = useState<string>("");
   const [bookingStep, setBookingStep] = useState<"showtime" | "seats" | "payment" | "ticket">("showtime");
   const [paymentMethod, setPaymentMethod] = useState("Ví điện tử");
   const [modal, setModal] = useState<"movie" | "room" | "showtime" | null>(null);
@@ -161,6 +174,24 @@ export default function Cinema() {
       if (data.movies?.length) setMovies(data.movies);
       if (data.rooms?.length) setRooms(data.rooms);
       if (data.showtimes?.length) setShowtimes(data.showtimes.map((item: any) => ({ id: item.id, movieId: item.movie_id, roomId: item.room_id, date: item.date, start: item.start_time, end: item.end_time, price: item.price })));
+      if (Array.isArray(data.customer_points) && data.customer_points.length) {
+        setCustomers(data.customer_points.map((row: any) => {
+          const email = String(row.email || "");
+          const displayName = email
+            ? email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (value: string) => value.toUpperCase())
+            : "Khách hàng";
+          const points = Number(row.points || 0);
+          return {
+            name: displayName,
+            email,
+            points,
+            tier: loyaltyTier(points),
+            joined: String(row.joined || "01/01/2026"),
+          };
+        }));
+      } else {
+        setCustomers(customersSeed);
+      }
       const moviesById = new Map((data.movies || []).map((item: any) => [item.id, item.title]));
       const showtimesById = new Map((data.showtimes || []).map((item: any) => [item.id, item.movie_id]));
       setTickets((data.tickets || []).map((item: any) => toTicket({ ...item, movie: moviesById.get(showtimesById.get(item.showtime_id)) || "" })));
@@ -240,7 +271,7 @@ export default function Cinema() {
     try { const saved = await postCinemaData("showtime", showtime); setShowtimes((current) => [...current, { id: saved.id, movieId: saved.movie_id, roomId: saved.room_id, date: saved.date, start: saved.start_time, end: saved.end_time, price: saved.price }]); setModal(null); setNotice("Đã tạo lịch chiếu mới."); } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể lưu lịch chiếu."); }
   }
   async function finishPayment() { const show = showtimes.find((item) => item.id === selectedShowtime); if (!show || !selectedSeats.length) return; try { const saved = await postCinemaData("ticket", { id: `TICKET-${show.id}-${Date.now()}`, showtime_id: show.id, seats: selectedSeats, amount: total, payment_method: paymentMethod, status: "Đã thanh toán" }); setTickets((current) => [toTicket({ ...saved, movie: selectedMovie?.title }), ...current]); setBookingStep("ticket"); setNotice("Đặt vé thành công. Vé điện tử đã sẵn sàng."); } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể lưu vé."); } }
-  function startNewBooking() { setSelectedSeats([]); setBookingStep("showtime"); setView("booking"); setNotice(""); }
+  function startNewBooking() { setSelectedSeats([]); setSelectedMovieId(""); setBookingStep("showtime"); setView("booking"); setNotice(""); }
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.replace("/");
@@ -268,6 +299,21 @@ export default function Cinema() {
       joined: "08/09/2026"
     };
   })();
+  const handleCustomerMovieSelect = (movieId: string) => {
+    const movieShowtimes = showtimes.filter((showtime) => showtime.movieId === movieId);
+    const nextShowtime = movieShowtimes[0];
+    if (!nextShowtime) {
+      setNotice("Phim này chưa có suất chiếu đang mở bán. Vui lòng chọn phim khác.");
+      setView("overview");
+      return;
+    }
+    setSelectedMovieId(movieId);
+    setSelectedShowtime(nextShowtime.id);
+    setBookingStep("seats");
+    setView("booking");
+    setNotice("");
+    changeRoom(nextShowtime.roomId);
+  };
   const canOpenView = (next: View) => !isCustomer || !["movies", "rooms", "seats", "schedules", "tickets", "accounts", "revenue"].includes(next);
   if (checkingAccess) return <div className="loading-state">Đang kiểm tra quyền quản trị...</div>;
   const nav = (next: View) => {
@@ -300,7 +346,7 @@ export default function Cinema() {
     </nav><div className="sidebar-bottom"><Link href="/profile">⚙ Cài đặt</Link><button type="button" onClick={logout}>↪ Đăng xuất</button></div></aside>
     <main className={`cinema-main${isViewChanging ? " cinema-main-changing" : ""}`}><header className="cinema-topbar"><div><p className="section-label">{lastSync.toUpperCase()}</p><h1>{view === "booking" ? (language === "en" ? "Book tickets" : "Đặt vé xem phim") : topbarGreeting}</h1></div><Link href="/profile" className="admin-profile"><span>{isAdmin ? "AD" : "HV"}</span><span><strong>{isAdmin ? (language === "en" ? "Admin" : "Admin") : isCustomer ? (language === "en" ? "Member" : "Hội viên") : (language === "en" ? "Staff" : "Nhân viên")}</strong><small>{isCustomer ? (language === "en" ? "Personal points" : "Điểm thưởng cá nhân") : canManage ? (language === "en" ? "Data management" : "Quản lý dữ liệu") : (language === "en" ? "Booking and ticketing" : "Đặt vé và in vé")}</small></span><i>⌄</i></Link></header>
       {notice && <div className="cinema-notice">{notice}</div>}
-      {view === "overview" && (isCustomer ? <CustomerOverview movies={movies} onNavigate={nav} /> : <><AdminSummary movies={movies} rooms={rooms} /><Overview movies={movies} rooms={rooms} showtimes={showtimes} realtimeClock={realtimeClock} lastSync={lastSync} onNavigate={nav} /></>)}
+      {view === "overview" && (isCustomer ? <CustomerOverview movies={movies} onNavigate={nav} onMovieSelect={handleCustomerMovieSelect} /> : <><AdminSummary movies={movies} rooms={rooms} /><Overview movies={movies} rooms={rooms} showtimes={showtimes} realtimeClock={realtimeClock} lastSync={lastSync} onNavigate={nav} /></>)}
       {view === "movies" && <><Heading title="Quản lý phim" action={canManage ? "+ Thêm phim" : "Chỉ xem dữ liệu"} onAction={() => canManage && setModal("movie")} /><section className="management-panel"><div className="panel-toolbar"><label className="search-box">⌕<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm theo tên phim, mã phim..." /></label><button className="filter-button" type="button">☷ Bộ lọc</button></div><div className="table-wrap"><table><thead><tr><th>PHIM</th><th>THỂ LOẠI</th><th>THỜI LƯỢNG</th><th>KHỞI CHIẾU</th><th>TRẠNG THÁI</th><th /></tr></thead><tbody>{filteredMovies.map((movie) => <tr key={movie.id}><td><div className="movie-cell"><img className="poster poster-image" src={movie.poster} alt={`Poster ${movie.title}`} /><span><strong>{movie.title}</strong><small>{movie.id}</small></span></div></td><td>{movie.genre}</td><td>{movie.duration} phút</td><td>{movie.release}</td><td><span className={`status ${movie.status === "Đang chiếu" ? "status-live" : "status-upcoming"}`}><i />{movie.status}</span></td><td>{canManage && <><button className="table-action" type="button" onClick={() => setEditModal({ type: "movie", item: movie })}>Sửa</button><button className="table-action danger" type="button" onClick={() => removeItem("movies", movie.id, "phim", () => setMovies((current) => current.filter((item) => item.id !== movie.id)))}>Xóa</button></>}</td></tr>)}</tbody></table></div></section></>}
       {view === "rooms" && <><Heading title="Quản lý phòng chiếu" action={canManage ? "+ Thêm phòng" : "Chỉ xem dữ liệu"} onAction={() => canManage && setModal("room")} /><section className="room-grid">{rooms.map((room) => <article className="room-card" key={room.id}><div className="room-card-top"><span className="room-code">{room.id}</span><span className={`status ${room.status === "Hoạt động" ? "status-live" : "status-maintenance"}`}><i />{room.status}</span></div><div className="room-title"><h3>{room.name}</h3><span>{room.type}</span></div><div className="room-meta"><span><small>HÀNG GHẾ</small><strong>{room.rows}</strong></span><span><small>SỨC CHỨA</small><strong>{room.seats}<em> ghế</em></strong></span></div><div className="room-actions"><button type="button" onClick={() => { changeRoom(room.id); nav("seats"); }}>⌗ Sơ đồ ghế</button>{canManage && <><button className="table-action" type="button" onClick={() => setEditModal({ type: "room", item: room })}>Sửa</button><button className="table-action danger" type="button" onClick={() => removeItem("rooms", room.id, "phòng", () => setRooms((current) => current.filter((item) => item.id !== room.id)))}>Xóa</button></>}</div></article>)}</section></>}
       {view === "seats" && <SeatManager canManage={canManage} rooms={rooms} roomId={selectedRoomId} seats={seats} selectedSeats={selectedSeats} onRoomChange={changeRoom} onToggle={toggleSeat} onAddSeat={addSeat} onDeleteSeat={removeSeat} />}
@@ -308,7 +354,7 @@ export default function Cinema() {
       {view === "tickets" && <TicketManager canManage={canManage} tickets={tickets} onExport={exportTickets} onDelete={(id) => removeItem("tickets", id, "vé", () => setTickets((current) => current.filter((item) => item.id !== id)))} onEdit={(item) => setEditModal({ type: "ticket", item })} />}
       {view === "customers" && (isCustomer ? <CustomerMembershipCard customer={customerProfile} /> : <><RewardsVouchers customers={customers} onRedeem={canManage ? redeemVoucher : () => setNotice("Tài khoản hiện tại chỉ có quyền xem mục này.")} /><CustomerManager readOnly={!canManage} customers={customers} setCustomers={setCustomers} onExport={exportCustomers} onEdit={(customer) => setEditModal({ type: "customer", item: customer })} onDelete={(email) => { if (window.confirm("Xóa thành viên này?")) setCustomers((current) => current.filter((item) => item.email !== email)); }} /></>)}
       {view === "accounts" && <AccountApprovalWithPermissions users={accountUsers} onStatusChange={updateAccountStatus} />}
-      {view === "booking" && <>{bookingStep !== "showtime" && <button className="filter-button booking-back-button" type="button" onClick={startNewBooking}>← Quay lại chọn phim</button>}<BookingFlow step={bookingStep} showtimes={showtimes} movieMap={movieMap} roomMap={roomMap} selectedShowtime={selectedShowtime} selectedSeats={selectedSeats} seats={seats} total={total} paymentMethod={paymentMethod} onShowtime={(id) => { setSelectedShowtime(id); setBookingStep("seats"); const show = showtimes.find((item) => item.id === id); if (show) changeRoom(show.roomId); }} onToggle={toggleSeat} onPayment={setPaymentMethod} onNext={() => setBookingStep(bookingStep === "seats" ? "payment" : "seats")} onFinish={finishPayment} onRestart={startNewBooking} /></>}
+      {view === "booking" && <>{bookingStep !== "showtime" && <button className="filter-button booking-back-button" type="button" onClick={startNewBooking}>← Quay lại chọn phim</button>}<BookingFlow step={bookingStep} showtimes={showtimes} movieMap={movieMap} roomMap={roomMap} selectedMovieId={selectedMovieId} selectedShowtime={selectedShowtime} selectedSeats={selectedSeats} seats={seats} total={total} paymentMethod={paymentMethod} onShowtime={(id) => { const show = showtimes.find((item) => item.id === id); if (show) { setSelectedMovieId(show.movieId); setSelectedShowtime(id); setBookingStep("seats"); changeRoom(show.roomId); } }} onToggle={toggleSeat} onPayment={setPaymentMethod} onNext={() => setBookingStep(bookingStep === "seats" ? "payment" : "seats")} onFinish={finishPayment} onRestart={startNewBooking} /></>}
       {view === "revenue" && <Revenue />}
       <footer className="cinema-footer">© 2026 Lotus Cinema <span>Hệ thống quản lý rạp chiếu phim</span></footer>
     </main>
@@ -329,10 +375,11 @@ export default function Cinema() {
 function Heading({ title, action, onAction }: { title: string; action: string; onAction: () => void }) { return <div className="cinema-heading"><div><p className="section-label">DỮ LIỆU VẬN HÀNH</p><h2>{title}</h2></div><button className="primary-button add-button" type="button" onClick={onAction}>{action}</button></div>; }
 function AdminSummary({ movies, rooms }: { movies: Movie[]; rooms: Room[] }) { const liveMovies = movies.filter((movie) => movie.status === "Đang chiếu").length; const activeRooms = rooms.filter((room) => room.status === "Hoạt động").length; return <section className="admin-summary"><div className="summary-kpi revenue"><span>↗</span><small>TỔNG DOANH THU · 7 NGÀY</small><strong>{revenueTotal.toFixed(1).replace(".", ",")} triệu</strong><em>+12,8% so với tuần trước</em></div><div className="summary-kpi tickets"><span>◇</span><small>VÉ ĐÃ BÁN · 7 NGÀY</small><strong>1.562</strong><em>Giá vé bình quân 80.300đ</em></div><div className="summary-kpi movies"><span>▣</span><small>PHIM ĐANG CHIẾU</small><strong>{liveMovies}</strong><em>{movies.length - liveMovies} phim sắp chiếu</em></div><div className="summary-kpi rooms"><span>▤</span><small>PHÒNG HOẠT ĐỘNG</small><strong>{activeRooms}</strong><em>{rooms.length - activeRooms} phòng bảo trì</em></div></section>; }
 function Overview({ movies, rooms, showtimes, realtimeClock, lastSync, onNavigate }: { movies: Movie[]; rooms: Room[]; showtimes: Showtime[]; realtimeClock: Date; lastSync: string; onNavigate: (view: View) => void }) { const currentDateLabel = realtimeClock.toLocaleDateString("vi-VN", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" }); return <><section className="cinema-stats"><div><span className="stat-icon orange">▣</span><p>Phim đang chiếu</p><strong>{movies.filter((movie) => movie.status === "Đang chiếu").length}</strong><small>Danh mục hiện tại</small></div><div><span className="stat-icon green">▤</span><p>Phòng hoạt động</p><strong>{rooms.filter((room) => room.status === "Hoạt động").length}<em>/{rooms.length}</em></strong><small>Công suất sẵn sàng</small></div><div><span className="stat-icon blue">▰</span><p>Vé đã bán hôm nay</p><strong>{todayTickets}</strong><small>Doanh thu {todayRevenue.toFixed(1).replace(".", ",")} triệu</small></div><div><span className="stat-icon violet">↗</span><p>Doanh thu hôm nay</p><strong>{todayRevenue.toFixed(1).replace(".", ",")}<em>tr</em></strong><small>236 vé · giá bình quân 80.000đ</small></div></section><section className="realtime-banner" aria-live="polite"><div><span className="realtime-dot" /> <strong>Realtime</strong> <small>{currentDateLabel}</small></div><span>{lastSync}</span></section><div className="quick-grid"><button onClick={() => onNavigate("seats")} type="button"><strong>⌗</strong><span><b>Sơ đồ ghế</b><small>Chọn và quản lý trạng thái ghế</small></span>→</button><button onClick={() => onNavigate("schedules")} type="button"><strong>▥</strong><span><b>Lịch chiếu</b><small>{showtimes.length} suất chiếu đang hoạt động</small></span>→</button><button onClick={() => onNavigate("booking")} type="button"><strong>◇</strong><span><b>Đặt vé mẫu</b><small>Kiểm tra luồng chọn ghế và thanh toán</small></span>→</button></div><Revenue /></>; }
-function CustomerOverview({ movies, onNavigate }: { movies: Movie[]; onNavigate: (view: View) => void }) {
+function CustomerOverview({ movies, onNavigate, onMovieSelect }: { movies: Movie[]; onNavigate: (view: View) => void; onMovieSelect: (movieId: string) => void }) {
   const hotMovies = [...movies]
     .filter((movie) => ["Kinh dị", "Hành động", "Tâm lý", "Hài hước"].includes(movie.genre) || movie.id.startsWith("MV-00"))
     .slice(0, 6);
+  const upcomingMovies = [...movies].filter((movie) => movie.status === "Sắp chiếu").slice(0, 4);
 
   return (
     <>
@@ -345,7 +392,7 @@ function CustomerOverview({ movies, onNavigate }: { movies: Movie[]; onNavigate:
       </section>
       <section className="customer-hot-grid">
         {hotMovies.map((movie) => (
-          <article className="customer-hot-card" key={movie.id}>
+          <article className="customer-hot-card" key={movie.id} onClick={() => onMovieSelect(movie.id)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onMovieSelect(movie.id); } }}>
             <div className="customer-hot-poster-wrap">
               <img src={movie.poster} alt={movie.title} className="customer-hot-poster" />
               <span className="customer-hot-badge">HOT</span>
@@ -360,6 +407,21 @@ function CustomerOverview({ movies, onNavigate }: { movies: Movie[]; onNavigate:
             </div>
           </article>
         ))}
+      </section>
+      <section className="customer-upcoming-wrapper">
+        <div className="customer-upcoming-header">
+          <p className="section-label">SẮP CHIẾU</p>
+          <h3>Đón chờ những bom tấn sắp tới</h3>
+        </div>
+        <div className="customer-upcoming-grid">
+          {upcomingMovies.map((movie) => (
+            <button className="customer-upcoming-card" key={movie.id} type="button" onClick={() => onMovieSelect(movie.id)}>
+              <span>{movie.genre}</span>
+              <strong>{movie.title}</strong>
+              <small>{movie.release}</small>
+            </button>
+          ))}
+        </div>
       </section>
     </>
   );

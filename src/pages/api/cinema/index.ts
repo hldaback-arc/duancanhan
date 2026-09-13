@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { requireUser } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 
-type CinemaResponse = { movies: unknown[]; rooms: unknown[]; showtimes: unknown[]; tickets: unknown[] };
+type CinemaResponse = { movies: unknown[]; rooms: unknown[]; showtimes: unknown[]; tickets: unknown[]; customer_points: unknown[] };
 
 async function requireAdmin(req: NextApiRequest, res: NextApiResponse) {
   const user = await requireUser(req, res);
@@ -23,19 +23,21 @@ function canManage(user: { role: string; access_level: string }) {
 }
 
 async function getCinemaData(): Promise<CinemaResponse> {
-  const [movies, rooms, showtimes, tickets] = await Promise.all([
+  const [movies, rooms, showtimes, tickets, customerPoints] = await Promise.all([
     supabase.from("movies").select("*").order("id"),
     supabase.from("rooms").select("*").order("id"),
     supabase.from("showtimes").select("*").order("date").order("start_time"),
     supabase.from("tickets").select("*").order("created_at", { ascending: false }),
+    supabase.from("customer_points").select("*").order("email"),
   ]);
-  const failed = [movies, rooms, showtimes, tickets].find((result) => result.error);
+  const failed = [movies, rooms, showtimes, tickets, customerPoints].find((result) => result.error);
   if (failed?.error) throw failed.error;
   return {
     movies: movies.data ?? [],
     rooms: rooms.data ?? [],
     showtimes: showtimes.data ?? [],
     tickets: tickets.data ?? [],
+    customer_points: customerPoints.data ?? [],
   };
 }
 
