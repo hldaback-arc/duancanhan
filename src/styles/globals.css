@@ -24,6 +24,62 @@ html[data-theme="dark"] {
   --shadow: rgba(0, 0, 0, 0.38);
 }
 
+html[data-theme="dark"] body {
+  background: #0f1720;
+  color: var(--ink);
+}
+
+html[data-theme="dark"] .cinema-app,
+html[data-theme="dark"] .cinema-main,
+html[data-theme="dark"] .management-panel,
+html[data-theme="dark"] .cinema-stats > div,
+html[data-theme="dark"] .summary-kpi,
+html[data-theme="dark"] .room-card,
+html[data-theme="dark"] .booking-shell,
+html[data-theme="dark"] .revenue-panel,
+html[data-theme="dark"] .seat-workspace,
+html[data-theme="dark"] .reward-voucher,
+html[data-theme="dark"] .approval-admin-banner,
+html[data-theme="dark"] .loyalty-banner,
+html[data-theme="dark"] .loyalty-add-form,
+html[data-theme="dark"] .realtime-banner,
+html[data-theme="dark"] .quick-grid button,
+html[data-theme="dark"] .cinema-modal,
+html[data-theme="dark"] .cinema-sidebar {
+  background: #141f2a;
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .cinema-sidebar {
+  background: #09141b;
+}
+
+html[data-theme="dark"] .nav-item,
+html[data-theme="dark"] .nav-item b,
+html[data-theme="dark"] .sidebar-bottom a,
+html[data-theme="dark"] .sidebar-bottom button,
+html[data-theme="dark"] .loan,
+html[data-theme="dark"] .search-box,
+html[data-theme="dark"] .panel-toolbar select,
+html[data-theme="dark"] .filter-button,
+html[data-theme="dark"] .customer-count,
+html[data-theme="dark"] .revenue-head button,
+html[data-theme="dark"] .utility-toggle,
+html[data-theme="dark"] .cinema-modal input,
+html[data-theme="dark"] .cinema-modal select,
+html[data-theme="dark"] .seat-toolbar select,
+html[data-theme="dark"] .voucher-toolbar select {
+  color: var(--ink);
+  background: #1a2b38;
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .cinema-notice {
+  background: rgba(255, 138, 101, 0.12);
+  color: #ffd5c7;
+}
+
 @theme inline {
   --color-background: var(--paper);
   --color-foreground: var(--ink);

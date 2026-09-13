@@ -35,6 +35,7 @@ export default function App({ Component, pageProps }: AppProps) {
     document.documentElement.style.colorScheme = theme;
     window.localStorage.setItem("lotus-theme", theme);
     window.localStorage.setItem("lotus-locale", locale);
+    window.dispatchEvent(new CustomEvent("lotus-locale-change", { detail: { locale } }));
   }, [theme, locale]);
 
   return (
