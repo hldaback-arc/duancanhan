@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { FormEvent, useState } from "react";
+import { useLocale } from "./_app";
 
 export default function Register() {
   const router = useRouter();
+  const { locale } = useLocale();
   const [form, setForm] = useState({ fullName: "", email: "", phone: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,19 +30,21 @@ export default function Register() {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  const isEnglish = locale === "en";
+
   return <div className="page-shell"><main className="auth-layout cinema-register-layout">
-    <section className="auth-aside cinema-register-aside"><Link href="/" className="brand-mark"><span className="brand-symbol">LT</span><span>Lotus Cinema</span></Link><div><p className="eyebrow">LOTUS CINEMA MEMBERS</p><h1>Đặt vé nhanh. Nhận ưu đãi riêng.</h1><p>Tạo tài khoản thành viên để lưu thông tin, theo dõi vé và tích điểm sau mỗi lần xem phim.</p><div className="register-perks"><div><span>01</span><strong>Vé điện tử</strong><small>Giữ thông tin đặt vé trong một nơi.</small></div><div><span>02</span><strong>Lotus Rewards</strong><small>Tích điểm và đổi ưu đãi cho lần xem sau.</small></div><div><span>03</span><strong>Suất chiếu yêu thích</strong><small>Trở lại rạp nhanh hơn mỗi ngày.</small></div></div></div><p className="register-aside-note">MỘT TÀI KHOẢN · NHIỀU TRẢI NGHIỆM ĐIỆN ẢNH</p></section>
+    <section className="auth-aside cinema-register-aside"><Link href="/" className="brand-mark"><span className="brand-symbol">LT</span><span>Lotus Cinema</span></Link><div><p className="eyebrow">{isEnglish ? "LOTUS CINEMA MEMBERS" : "LOTUS CINEMA MEMBERS"}</p><h1>{isEnglish ? "Book quickly. Enjoy perks." : "Đặt vé nhanh. Nhận ưu đãi riêng."}</h1><p>{isEnglish ? "Create a member account to save your information, track tickets, and collect points on every movie visit." : "Tạo tài khoản thành viên để lưu thông tin, theo dõi vé và tích điểm sau mỗi lần xem phim."}</p><div className="register-perks"><div><span>01</span><strong>{isEnglish ? "E-ticket" : "Vé điện tử"}</strong><small>{isEnglish ? "Keep booking details in one place." : "Giữ thông tin đặt vé trong một nơi."}</small></div><div><span>02</span><strong>Lotus Rewards</strong><small>{isEnglish ? "Earn points and redeem perks on your next visit." : "Tích điểm và đổi ưu đãi cho lần xem sau."}</small></div><div><span>03</span><strong>{isEnglish ? "Favorite showtimes" : "Suất chiếu yêu thích"}</strong><small>{isEnglish ? "Return to the cinema faster every day." : "Trở lại rạp nhanh hơn mỗi ngày."}</small></div></div></div><p className="register-aside-note">{isEnglish ? "ONE ACCOUNT · MANY CINEMA EXPERIENCES" : "MỘT TÀI KHOẢN · NHIỀU TRẢI NGHIỆM ĐIỆN ẢNH"}</p></section>
     <section className="form-panel auth-form-panel" aria-labelledby="register-title">
-      <div className="form-heading"><p className="section-label">THẺ THÀNH VIÊN</p><h2 id="register-title">Tạo tài khoản</h2><p>Điền thông tin để bắt đầu hành trình tại Lotus Cinema.</p></div>
+      <div className="form-heading"><p className="section-label">{isEnglish ? "MEMBER CARD" : "THẺ THÀNH VIÊN"}</p><h2 id="register-title">{isEnglish ? "Create account" : "Tạo tài khoản"}</h2><p>{isEnglish ? "Fill in your details to begin your Lotus Cinema journey." : "Điền thông tin để bắt đầu hành trình tại Lotus Cinema."}</p></div>
       <form onSubmit={handleSubmit} className="student-form register-form">
-        <label htmlFor="fullName">Tên hiển thị <span>*</span></label><input id="fullName" placeholder="Nguyễn Minh Anh" value={form.fullName} onChange={(event) => updateField("fullName", event.target.value)} autoComplete="name" required />
-        <label htmlFor="register-email">Email nhận vé <span>*</span></label><input id="register-email" type="email" placeholder="ban@example.com" value={form.email} onChange={(event) => updateField("email", event.target.value)} autoComplete="email" required />
-        <label htmlFor="register-phone">Số điện thoại <span>*</span></label><input id="register-phone" type="tel" inputMode="tel" placeholder="090 123 4567" value={form.phone} onChange={(event) => updateField("phone", event.target.value)} autoComplete="tel" required />
-        <label htmlFor="register-password">Mật khẩu <span>*</span></label><input id="register-password" type="password" placeholder="Tối thiểu 8 ký tự" value={form.password} onChange={(event) => updateField("password", event.target.value)} autoComplete="new-password" minLength={8} required />
+        <label htmlFor="fullName">{isEnglish ? "Display name" : "Tên hiển thị"} <span>*</span></label><input id="fullName" placeholder={isEnglish ? "Jane Doe" : "Nguyễn Minh Anh"} value={form.fullName} onChange={(event) => updateField("fullName", event.target.value)} autoComplete="name" required />
+        <label htmlFor="register-email">{isEnglish ? "Ticket email" : "Email nhận vé"} <span>*</span></label><input id="register-email" type="email" placeholder="ban@example.com" value={form.email} onChange={(event) => updateField("email", event.target.value)} autoComplete="email" required />
+        <label htmlFor="register-phone">{isEnglish ? "Phone number" : "Số điện thoại"} <span>*</span></label><input id="register-phone" type="tel" inputMode="tel" placeholder={isEnglish ? "090 123 4567" : "090 123 4567"} value={form.phone} onChange={(event) => updateField("phone", event.target.value)} autoComplete="tel" required />
+        <label htmlFor="register-password">{isEnglish ? "Password" : "Mật khẩu"} <span>*</span></label><input id="register-password" type="password" placeholder={isEnglish ? "Minimum 8 characters" : "Tối thiểu 8 ký tự"} value={form.password} onChange={(event) => updateField("password", event.target.value)} autoComplete="new-password" minLength={8} required />
         {error && <p className="form-message error-message">{error}</p>}
-        <button type="submit" className="primary-button">{loading ? "Đang tạo thẻ thành viên..." : "Tạo tài khoản thành viên"}<span aria-hidden="true">→</span></button>
+        <button type="submit" className="primary-button">{loading ? (isEnglish ? "Creating member card..." : "Đang tạo thẻ thành viên...") : isEnglish ? "Create member account" : "Tạo tài khoản thành viên"}<span aria-hidden="true">→</span></button>
       </form>
-      <p className="form-footer">Đã là thành viên? <Link href="/">Đăng nhập để đặt vé</Link></p>
+      <p className="form-footer">{isEnglish ? "Already a member?" : "Đã là thành viên?"} <Link href="/">{isEnglish ? "Login to book" : "Đăng nhập để đặt vé"}</Link></p>
     </section>
   </main></div>;
 }

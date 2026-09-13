@@ -29,6 +29,12 @@ html[data-theme="dark"] body {
   color: var(--ink);
 }
 
+html[data-theme="dark"] .page-shell,
+html[data-theme="dark"] .approval-layout,
+html[data-theme="dark"] .login-layout,
+html[data-theme="dark"] .auth-layout,
+html[data-theme="dark"] .account-layout,
+html[data-theme="dark"] .level-layout,
 html[data-theme="dark"] .cinema-app,
 html[data-theme="dark"] .cinema-main,
 html[data-theme="dark"] .management-panel,
@@ -45,10 +51,27 @@ html[data-theme="dark"] .loyalty-add-form,
 html[data-theme="dark"] .realtime-banner,
 html[data-theme="dark"] .quick-grid button,
 html[data-theme="dark"] .cinema-modal,
-html[data-theme="dark"] .cinema-sidebar {
-  background: #141f2a;
+html[data-theme="dark"] .cinema-sidebar,
+html[data-theme="dark"] .form-panel,
+html[data-theme="dark"] .auth-aside,
+html[data-theme="dark"] .account-tabs,
+html[data-theme="dark"] .account-form,
+html[data-theme="dark"] .ticket-result {
+  background: #121d29;
   color: var(--ink);
   border-color: var(--line);
+}
+
+html[data-theme="dark"] .page-shell {
+  background: radial-gradient(circle at 84% 15%, rgba(255, 138, 101, 0.18), transparent 22rem), linear-gradient(135deg, #0b1219 0%, #101d2a 100%);
+}
+
+html[data-theme="dark"] .approval-layout,
+html[data-theme="dark"] .login-layout,
+html[data-theme="dark"] .auth-layout,
+html[data-theme="dark"] .account-layout,
+html[data-theme="dark"] .level-layout {
+  background: transparent;
 }
 
 html[data-theme="dark"] .cinema-sidebar {
@@ -159,6 +182,101 @@ a {
 .approval-account div { display: grid; gap: .25rem; }.approval-account small { color: var(--muted); }
 .approval-status { display: flex; align-items: center; gap: .55rem; margin-top: 1.5rem; color: #9b7a18; font-size: .8rem; }.approval-status i { width: .5rem; height: .5rem; border-radius: 50%; background: currentColor; }
 .approval-actions { display: flex; align-items: center; gap: 1.5rem; margin-top: 2.5rem; }.approval-actions .secondary-button { padding: .85rem 1rem; background: var(--accent); color: #fff; }.approval-actions .text-button { color: var(--muted); }
+
+.customer-hot-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1.5rem;
+  padding: 1.5rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, rgba(217, 93, 56, 0.08), rgba(255,255,255,0.4));
+}
+
+.customer-hot-hero h2 {
+  max-width: 620px;
+  margin: 0.4rem 0 0;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.customer-hot-cta {
+  width: auto !important;
+  margin-top: 0 !important;
+  min-width: 180px;
+}
+
+.customer-hot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.customer-hot-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 1.1rem;
+  background: var(--panel);
+  box-shadow: 0 10px 24px var(--shadow);
+}
+
+.customer-hot-poster-wrap {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+}
+
+.customer-hot-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.customer-hot-badge {
+  position: absolute;
+  top: 0.8rem;
+  left: 0.8rem;
+  display: inline-flex;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(217, 93, 56, 0.95);
+  color: white;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.customer-hot-info {
+  padding: 1rem 1rem 1.1rem;
+}
+
+.customer-hot-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.customer-hot-info h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 400;
+}
+
+.customer-hot-info small {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--muted);
+}
 
 .realtime-banner {
   display: flex;

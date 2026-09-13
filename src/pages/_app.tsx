@@ -1,7 +1,25 @@
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
+
+export const LocaleContext = createContext<{ locale: "vi" | "en"; setLocale: (value: "vi" | "en") => void }>({
+  locale: "vi",
+  setLocale: () => undefined,
+});
+
+export const ThemeContext = createContext<{ theme: "light" | "dark"; setTheme: (value: "light" | "dark") => void }>({
+  theme: "light",
+  setTheme: () => undefined,
+});
+
+export function useLocale() {
+  return useContext(LocaleContext);
+}
+
+export function useTheme() {
+  return useContext(ThemeContext);
+}
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -35,22 +53,25 @@ export default function App({ Component, pageProps }: AppProps) {
     document.documentElement.style.colorScheme = theme;
     window.localStorage.setItem("lotus-theme", theme);
     window.localStorage.setItem("lotus-locale", locale);
+    window.dispatchEvent(new CustomEvent("lotus-theme-change", { detail: { theme } }));
     window.dispatchEvent(new CustomEvent("lotus-locale-change", { detail: { locale } }));
   }, [theme, locale]);
 
   return (
-    <>
-      <div className="global-toolbar" aria-label="Cài đặt chung">
-        <button type="button" className="utility-toggle" onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}>
-          {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
-        </button>
-        <button type="button" className="utility-toggle" onClick={() => setLocale((current) => (current === "vi" ? "en" : "vi"))}>
-          {locale === "vi" ? "VI" : "EN"}
-        </button>
-      </div>
-      <div className={`route-frame${isNavigating ? " route-frame-loading" : ""}`} key={router.asPath}>
-        <Component {...pageProps} />
-      </div>
-    </>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <LocaleContext.Provider value={{ locale, setLocale }}>
+        <div className="global-toolbar" aria-label="Cài đặt chung">
+          <button type="button" className="utility-toggle" onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}>
+            {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
+          </button>
+          <button type="button" className="utility-toggle" onClick={() => setLocale((current) => (current === "vi" ? "en" : "vi"))}>
+            {locale === "vi" ? "VI" : "EN"}
+          </button>
+        </div>
+        <div className={`route-frame${isNavigating ? " route-frame-loading" : ""}`} key={router.asPath}>
+          <Component {...pageProps} />
+        </div>
+      </LocaleContext.Provider>
+    </ThemeContext.Provider>
   );
 }

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { FormEvent, useEffect, useState } from "react";
+import { useLocale } from "./_app";
 
 export default function Home() {
   const router = useRouter();
+  const { locale } = useLocale();
   const [checkingSession, setCheckingSession] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +48,9 @@ export default function Home() {
     }
   }
 
-  if (checkingSession) return <div className="loading-state">Đang kiểm tra phiên đăng nhập...</div>;
+  const isEnglish = locale === "en";
+
+  if (checkingSession) return <div className="loading-state">{isEnglish ? "Checking session..." : "Đang kiểm tra phiên đăng nhập..."}</div>;
 
   return (
     <div className="page-shell">
@@ -54,8 +58,8 @@ export default function Home() {
         <section className="form-panel" aria-labelledby="form-title">
           <div className="form-heading">
             <p className="section-label">LOTUS CINEMA</p>
-            <h2 id="form-title">Đăng nhập</h2>
-            <p>Đăng nhập để đặt vé và quản lý tài khoản thành viên.</p>
+            <h2 id="form-title">{isEnglish ? "Login" : "Đăng nhập"}</h2>
+            <p>{isEnglish ? "Sign in to book tickets and manage your member account." : "Đăng nhập để đặt vé và quản lý tài khoản thành viên."}</p>
           </div>
           <form onSubmit={handleSubmit} className="student-form">
             <label htmlFor="email">Email <span>*</span></label>
@@ -69,12 +73,12 @@ export default function Home() {
               onChange={(event) => setEmail(event.target.value)}
               required
             />
-            <label htmlFor="password">Mật khẩu <span>*</span></label>
+            <label htmlFor="password">{isEnglish ? "Password" : "Mật khẩu"} <span>*</span></label>
             <input
               id="password"
               name="password"
               type="password"
-              placeholder="Tối thiểu 8 ký tự"
+              placeholder={isEnglish ? "Minimum 8 characters" : "Tối thiểu 8 ký tự"}
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -82,10 +86,10 @@ export default function Home() {
             />
             {error && <p className="form-message error-message">{error}</p>}
             <button type="submit" className="primary-button">
-              {loading ? "Đang xác thực..." : "Đăng nhập"} <span aria-hidden="true">→</span>
+              {loading ? (isEnglish ? "Authenticating..." : "Đang xác thực...") : isEnglish ? "Login" : "Đăng nhập"} <span aria-hidden="true">→</span>
             </button>
           </form>
-          <p className="form-footer">Chưa có tài khoản? <Link href="/register">Đăng ký ngay</Link></p>
+          <p className="form-footer">{isEnglish ? "New member?" : "Chưa có tài khoản?"} <Link href="/register">{isEnglish ? "Register now" : "Đăng ký ngay"}</Link></p>
         </section>
       </main>
     </div>

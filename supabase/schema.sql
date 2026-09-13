@@ -92,7 +92,13 @@ insert into public.movies (id, title, genre, duration, release, status, poster) 
   ('MV-001', 'Avatar 3', 'Sci-Fi', 162, '15/09/2026', 'Đang chiếu', 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=160&q=80'),
   ('MV-002', 'Conan: Ngôi sao 5 cánh', 'Anime', 110, '20/09/2026', 'Sắp chiếu', 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=160&q=80'),
   ('MV-003', 'Mùa hè cuối cùng', 'Tâm lý', 98, '08/09/2026', 'Đang chiếu', 'https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=160&q=80'),
-  ('MV-004', 'Đêm trong rừng', 'Kinh dị', 115, '01/10/2026', 'Sắp chiếu', 'https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=160&q=80')
+  ('MV-004', 'Đêm trong rừng', 'Kinh dị', 115, '01/10/2026', 'Sắp chiếu', 'https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=160&q=80'),
+  ('MV-005', 'Lên Hương', 'Kinh dị', 121, '18/09/2026', 'Đang chiếu', 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=160&q=80'),
+  ('MV-006', 'Nghĩ Hệ Sợ Nghĩ', 'Kinh dị', 117, '22/09/2026', 'Đang chiếu', 'https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=160&q=80'),
+  ('MV-007', 'Quý Tử Vượt Giàu', 'Hài hước', 118, '25/09/2026', 'Đang chiếu', 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=160&q=80'),
+  ('MV-008', 'Hồ Linh Tráng Sĩ', 'Hành động', 135, '27/09/2026', 'Đang chiếu', 'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&w=160&q=80'),
+  ('MV-009', 'Cô Thuật Hắc Ngài', 'Kinh dị', 86, '29/09/2026', 'Sắp chiếu', 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=160&q=80'),
+  ('MV-010', 'Mãi Nợ Một Lời Từ', 'Tâm lý', 120, '03/10/2026', 'Đang chiếu', 'https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?auto=format&fit=crop&w=160&q=80')
 on conflict (id) do nothing;
 
 insert into public.rooms (id, name, type, rows, seats, status) values

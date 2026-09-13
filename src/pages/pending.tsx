@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { MouseEvent, useEffect, useState } from "react";
+import { useLocale } from "./_app";
 
 type AccountStatus = "pending" | "approved" | "rejected";
 type PendingUser = { fullName: string; email: string; accountStatus: AccountStatus };
 
 export default function Pending() {
   const router = useRouter();
+  const { locale } = useLocale();
+  const isEnglish = locale === "en";
   const [user, setUser] = useState<PendingUser | null>(null);
   const [status, setStatus] = useState<AccountStatus>("pending");
   const [loading, setLoading] = useState(true);
@@ -50,19 +53,19 @@ export default function Pending() {
     await logout();
   }
 
-  if (loading) return <div className="loading-state">Đang kiểm tra trạng thái tài khoản...</div>;
+  if (loading) return <div className="loading-state">{isEnglish ? "Checking account status..." : "Đang kiểm tra trạng thái tài khoản..."}</div>;
 
   const rejected = status === "rejected";
   return <div className="page-shell"><main className="approval-layout">
     <section className="approval-panel" aria-labelledby="approval-title">
       <Link href="/" className="brand-mark"><span className="brand-symbol">LT</span><span>Lotus Cinema</span></Link>
       <div className="approval-mark" aria-hidden="true">{rejected ? "!" : "✓"}</div>
-      <p className="eyebrow">{rejected ? "YÊU CẦU CHƯA ĐƯỢC DUYỆT" : "LOTUS CINEMA MEMBERS"}</p>
-      <h1 id="approval-title">{rejected ? "Tài khoản chưa được cấp quyền." : "Hồ sơ đang chờ cấp quyền."}</h1>
-      <p>{rejected ? "Quản trị viên chưa thể phê duyệt tài khoản này. Vui lòng liên hệ rạp để được hỗ trợ thêm." : "Thông tin của bạn đã được ghi nhận. Quản trị viên sẽ kiểm tra và cấp quyền truy cập trong thời gian sớm nhất."}</p>
+      <p className="eyebrow">{rejected ? (isEnglish ? "REQUEST NOT APPROVED" : "YÊU CẦU CHƯA ĐƯỢC DUYỆT") : (isEnglish ? "LOTUS CINEMA MEMBERS" : "LOTUS CINEMA MEMBERS")}</p>
+      <h1 id="approval-title">{rejected ? (isEnglish ? "Account not authorized yet." : "Tài khoản chưa được cấp quyền.") : (isEnglish ? "Your profile is awaiting approval." : "Hồ sơ đang chờ cấp quyền.")}</h1>
+      <p>{rejected ? (isEnglish ? "This account has not been approved by an administrator yet. Please contact the cinema for assistance." : "Quản trị viên chưa thể phê duyệt tài khoản này. Vui lòng liên hệ rạp để được hỗ trợ thêm.") : (isEnglish ? "Your information has been received. The administrator will review and grant access as soon as possible." : "Thông tin của bạn đã được ghi nhận. Quản trị viên sẽ kiểm tra và cấp quyền truy cập trong thời gian sớm nhất.")}</p>
       {user && <div className="approval-account"><span>{user.fullName.slice(0, 2).toUpperCase()}</span><div><strong>{user.fullName}</strong><small>{user.email}</small></div></div>}
-      {!rejected && <div className="approval-status"><i /> Đang chờ quản trị viên xác nhận</div>}
-      <div className="approval-actions"><button className="text-button" type="button" onClick={logout}>Đăng xuất</button><Link href="/" className="secondary-button" onClick={goToLogin}>Về trang đăng nhập <span aria-hidden="true">→</span></Link></div>
+      {!rejected && <div className="approval-status"><i /> {isEnglish ? "Waiting for administrator confirmation" : "Đang chờ quản trị viên xác nhận"}</div>}
+      <div className="approval-actions"><button className="text-button" type="button" onClick={logout}>{isEnglish ? "Log out" : "Đăng xuất"}</button><Link href="/" className="secondary-button" onClick={goToLogin}>{isEnglish ? "Back to login" : "Về trang đăng nhập"} <span aria-hidden="true">→</span></Link></div>
     </section>
   </main></div>;
 }
